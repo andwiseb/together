@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { config } from 'dotenv'
 import { connectDB } from './src/db-connection';
-import linkRoutes from './src/api/routes/linkRoutes';
+import roomRoutes from './src/api/routes/roomRoutes';
 import userRoutes from './src/api/routes/userRoutes';
 
 // Load .env config file
@@ -22,8 +22,8 @@ app.use(cors());
 // Http logger
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 
-app.use('api/users', userRoutes);
-app.use('api/links', linkRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/rooms', roomRoutes);
 
 app.listen(port, () =>
     console.log(`🚀 Server running at: http://localhost:${port}`)

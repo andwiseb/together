@@ -7,6 +7,7 @@ import { useRoom } from '../contexts/RoomContext';
 import ReactPlayer from 'react-player'
 import Container from 'react-bootstrap/Container';
 import { useNavigate, createSearchParams } from 'react-router-dom';
+import { createRoom } from '../services/room-service';
 
 const isValidHttpUrl = (input: string) => {
     let url;
@@ -22,7 +23,8 @@ const isValidHttpUrl = (input: string) => {
 
 const CreateRoom = () => {
     const [url, setUrl] = useState<string>('');
-    const [urlValidity, setUrlValidity] = useState(false);
+    const [urlValidity, setUrlValidity] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
 
     const {} = useRoom();
     const { username } = useUser();
@@ -41,13 +43,20 @@ const CreateRoom = () => {
 
     const urlChanged = (e: SyntheticEvent) => {
         const value = (e.target as HTMLInputElement).value;
-        // if (isValidHttpUrl(value)) {
         setUrl(value);
-        // }
     }
 
     const navigateToRoom = () => {
-        navigate({ pathname: '/room', search: createSearchParams({ id: '123' }).toString() })
+        setLoading(true);
+        createRoom(url)
+            .then((res) => {
+                console.log('room', res);
+                navigate({ pathname: '/room', search: createSearchParams({ id: res.id }).toString() })
+            })
+            .catch((err) => {
+                console.error('error', err);
+            })
+            .finally(() => setLoading(false));
     }
 
     return (

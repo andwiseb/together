@@ -6,7 +6,7 @@ export interface UserModel {
 
 export interface RoomModel {
     id: string;
-    medialUrl: string;
+    mediaUrl: string;
     link: string;
     user?: UserModel;
     userId: string;
