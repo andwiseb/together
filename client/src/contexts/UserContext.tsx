@@ -19,5 +19,5 @@ export const useUser = () => {
 
 export const UserProvider = ({ children }) => {
     const [username, setUserName] = useLocalStorage({ key: 'w2gCloneUser', initialValue: '' });
-    return <UserContext.Provider value={{ username, setUserName }}>{children} </UserContext.Provider>
+    return <UserContext.Provider value={{ username, setUserName }}>{children}</UserContext.Provider>
 }

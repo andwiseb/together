@@ -24,6 +24,19 @@ export const getRoomById = async (req: Request, res: Response) => {
     }
 }
 
+export const getRoomByLink = async (req: Request, res: Response) => {
+    const { link } = req.params;
+    try {
+        const room = await prisma.room.findUnique({ where: { link } });
+        if (!room) {
+            return res.status(404).json({ message: "Room not found!" });
+        }
+        res.json(room);
+    } catch (error) {
+        res.status(400).json(error);
+    }
+}
+
 export const createRoom = async (req: Request, res: Response) => {
     const { mediaUrl } = req.body;
     try {

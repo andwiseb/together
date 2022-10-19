@@ -15,6 +15,7 @@ function App() {
                     <Col>
                         <Routes>
                             <Route path='/' element={<CreateUser />} />
+                            <Route path='/:link' element={<RoomView />}/>
                             <Route path="/create-room" element={<CreateRoom />} />
                             <Route path="/room" element={<RoomView />} />
                         </Routes>

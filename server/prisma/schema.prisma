@@ -13,7 +13,7 @@ datasource db {
 model Room {
   id        String   @id @default(uuid())
   mediaUrl  String
-  link      String   @default(cuid())
+  link      String   @default(cuid()) @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])

@@ -1,34 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import ReactPlayer from 'react-player'
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { useSearchParams } from 'react-router-dom';
-import { getRoom } from '../services/room-service';
+import Button from 'react-bootstrap/Button';
+import { Card, Form, InputGroup } from 'react-bootstrap';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { getRoomById, getRoomByLink } from '../services/room-service';
 import { RoomModel } from '../types';
-import { Card } from 'react-bootstrap';
 import { useUser } from '../contexts/UserContext';
+import { useSocket } from '../contexts/SocketContext';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import WatchPlayer from './WatchPlayer';
+
+const RoomNotFound = () => {
+    return <h1>Room not found! :(</h1>;
+}
 
 const RoomView = () => {
     const [params] = useSearchParams();
+    const { link } = useParams();
+    const { username } = useUser();
+    const { joinRoom } = useSocket()!;
     const [room, setRoom] = useState<RoomModel | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
-    const { username } = useUser();
+    const [error, setError] = useState<any>(null);
+    const [roomLink, setRoomLink] = useState<string>('');
+    const [roomLinkCopied, setRoomLinkCopied] = useState<boolean>(false);
 
     const id = params.get('id');
 
+    if (!id && !link) {
+        return <RoomNotFound />
+    }
+
     useEffect(() => {
-        if (!id || room) {
+        if (!id && !link) {
             return;
         }
 
         setLoading(true);
 
-        getRoom(id)
-            .then((res) => {
-                console.log('room', res);
-                setRoom(res);
+        (id ? getRoomById(id) : getRoomByLink(link as string))
+            .then((room) => {
+                console.log('room', room);
+                joinRoom(room.link, () => console.log('Joined room:', room.link));
+                setRoomLink(window.location.origin + '/' + room.link)
+                setRoom(room);
             })
+            .catch((err) => setError(err))
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -37,35 +56,39 @@ const RoomView = () => {
             {room ?
                 <Container>
                     <Row>
-                        <Col sm={10} className='player-wrapper'>
-                            <ReactPlayer className='react-player'
-                                         url={room?.mediaUrl}
-                                         width='100%'
-                                         height='100%'
-                                         config={{
-                                             facebook: {
-                                                 attributes: {
-                                                     'data-height': 540,
-                                                 },
-                                             },
-                                         }}
-                                         controls />
-                        </Col>
-                        <Col sm={2}>
-                            <Card className='mt-3' style={{height: '540px'}}>
-                                <Card.Body>
-                                    <Card.Title>Users List:</Card.Title>
-                                    <Card.Text>
-                                        <ol>
-                                            <li>{username}</li>
-                                        </ol>
-                                    </Card.Text>
-                                </Card.Body>
-                            </Card>
+                        <Col className='player-wrapper'>
+                            <WatchPlayer room={room} />
                         </Col>
                     </Row>
+                    <Row>
+                        <Card className='my-2'>
+                            <Card.Body>
+                                <Card.Title>Room Info:</Card.Title>
+                                <Card.Text as='div'>
+                                    <InputGroup>
+                                        <InputGroup.Text>Share Room link:</InputGroup.Text>
+                                        <Form.Control
+                                            defaultValue={roomLink}
+                                            readOnly
+                                        />
+                                        <CopyToClipboard text={roomLink}
+                                                         onCopy={() => setRoomLinkCopied(true)}>
+                                            <Button variant="outline-secondary">
+                                                {roomLinkCopied ? 'Copied!' : 'Copy'}
+                                            </Button>
+                                        </CopyToClipboard>
+                                    </InputGroup>
+                                    <hr />
+                                    <h6>Currently Watching:</h6>
+                                    <ol>
+                                        <li>{username}</li>
+                                    </ol>
+                                </Card.Text>
+                            </Card.Body>
+                        </Card>
+                    </Row>
                 </Container> :
-                <h1>Loading Room ...</h1>
+                error ? <RoomNotFound /> : <h1>Loading Room ...</h1>
             }
         </>
     );
