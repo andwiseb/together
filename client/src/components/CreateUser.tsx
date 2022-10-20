@@ -2,7 +2,7 @@ import React, { SyntheticEvent, useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from '../contexts/UserContext';
 import { createUser } from '../services/user-service';
 import { Alert } from 'react-bootstrap';
@@ -20,10 +20,11 @@ const CreateUser = () => {
     const [value, setValue] = useState<string>(generateRandUsername);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const { state } = useLocation();
 
     useEffect(() => {
         if (user) {
-            navigate('/create-room');
+            navigate(state?.path || '/create-room');
         }
     }, [user]);
 
@@ -33,7 +34,7 @@ const CreateUser = () => {
         createUser(value)
             .then((user) => {
                 setUser(user.id);
-                navigate('/create-room');
+                // navigate('/create-room');
             })
             .catch((err) => {
                 console.error('error', err);
