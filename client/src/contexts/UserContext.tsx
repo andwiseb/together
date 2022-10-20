@@ -2,14 +2,14 @@ import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface UserContextProps {
-    username: string;
-    setUserName: (name: string) => {}
+    user: string;
+    setUser: (user: string) => {}
 }
 
 const UserContext = React.createContext<UserContextProps>({
-    username: '',
-    setUserName: (name: string) => {
-        return name;
+    user: '',
+    setUser: (user: string) => {
+        return user;
     }
 });
 
@@ -18,6 +18,6 @@ export const useUser = () => {
 }
 
 export const UserProvider = ({ children }) => {
-    const [username, setUserName] = useLocalStorage({ key: 'w2gCloneUser', initialValue: '' });
-    return <UserContext.Provider value={{ username, setUserName }}>{children}</UserContext.Provider>
+    const [user, setUser] = useLocalStorage({ key: 'w2gCloneUser', initialValue: '' });
+    return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>
 }

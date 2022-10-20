@@ -1,13 +1,12 @@
-import React, { SyntheticEvent, useEffect, useRef, useState } from 'react';
-import Button from 'react-bootstrap/Button';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import { useUser } from '../contexts/UserContext';
-import { useRoom } from '../contexts/RoomContext';
 import ReactPlayer from 'react-player'
 import Container from 'react-bootstrap/Container';
 import { useNavigate, createSearchParams } from 'react-router-dom';
 import { createRoom } from '../services/room-service';
+import { getUser } from '../services/user-service';
 
 const isValidHttpUrl = (input: string) => {
     let url;
@@ -24,15 +23,29 @@ const isValidHttpUrl = (input: string) => {
 const CreateRoom = () => {
     const [url, setUrl] = useState<string>('');
     const [urlValidity, setUrlValidity] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(false);
-
-    const {} = useRoom();
-    const { username } = useUser();
+    const [, setLoading] = useState<boolean>(false);
+    const [username, setUsername] = useState<string>('');
+    const { user, setUser } = useUser();
     const navigate = useNavigate();
 
     useEffect(() => {
         setUrlValidity(isValidHttpUrl(url) && ReactPlayer.canPlay(url));
-    }, [url])
+    }, [url]);
+
+    useEffect(() => {
+        getUser(user)
+            .then((userObj) => setUsername(userObj.username))
+            .catch((err) => {
+                console.log('load user error', err);
+                if (err && (err.status && err.status === 404 || err.response && err.response.status === 404)) {
+                    // Clear cached user id
+                    setUser('');
+                    // Return to home route, create user
+                    navigate('/');
+                }
+            });
+    }, [user]);
+
 
     const onFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();

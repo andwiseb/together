@@ -4,13 +4,14 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import { Card, Form, InputGroup } from 'react-bootstrap';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getRoomById, getRoomByLink } from '../services/room-service';
 import { RoomModel } from '../types';
 import { useUser } from '../contexts/UserContext';
 import { useSocket } from '../contexts/SocketContext';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import WatchPlayer from './WatchPlayer';
+import { getUser } from '../services/user-service';
 
 const RoomNotFound = () => {
     return <h1>Room not found! :(</h1>;
@@ -19,13 +20,15 @@ const RoomNotFound = () => {
 const RoomView = () => {
     const [params] = useSearchParams();
     const { link } = useParams();
-    const { username } = useUser();
+    const { user, setUser } = useUser();
     const { joinRoom } = useSocket()!;
     const [room, setRoom] = useState<RoomModel | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<any>(null);
     const [roomLink, setRoomLink] = useState<string>('');
     const [roomLinkCopied, setRoomLinkCopied] = useState<boolean>(false);
+    const [username, setUsername] = useState<string>('');
+    const navigate = useNavigate();
 
     const id = params.get('id');
 
@@ -50,6 +53,24 @@ const RoomView = () => {
             .catch((err) => setError(err))
             .finally(() => setLoading(false));
     }, [id]);
+
+    useEffect(() => {
+        if (!user) {
+            return;
+        }
+
+        getUser(user)
+            .then((res) => setUsername(res.username))
+            .catch((err) => {
+                console.log('load user error', err);
+                if (err && (err.status && err.status === 404 || err.response && err.response.status === 404)) {
+                    // Clear cached user id
+                    setUser('');
+                    // Return to home route, create user
+                    navigate('/');
+                }
+            });
+    }, [user])
 
     return (
         <>

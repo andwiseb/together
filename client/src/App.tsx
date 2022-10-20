@@ -6,6 +6,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import RoomView from './components/RoomView';
+import RequireAuth from './components/RequireAuth';
 
 function App() {
     return (
@@ -15,9 +16,9 @@ function App() {
                     <Col>
                         <Routes>
                             <Route path='/' element={<CreateUser />} />
-                            <Route path='/:link' element={<RoomView />}/>
-                            <Route path="/create-room" element={<CreateRoom />} />
-                            <Route path="/room" element={<RoomView />} />
+                            <Route path='/:link' element={<RequireAuth><RoomView /></RequireAuth>} />
+                            <Route path="/create-room" element={<RequireAuth><CreateRoom /></RequireAuth>} />
+                            <Route path="/room" element={<RequireAuth><RoomView /></RequireAuth>} />
                         </Routes>
                     </Col>
                 </Row>

@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useState } from 'react';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
@@ -9,25 +9,30 @@ import { Alert } from 'react-bootstrap';
 import { handleHttpError } from '../services/http-client';
 
 const generateRandUsername = (): string => {
-    const prefix = 'user';
+    const prefix = 'user-';
     const rand = Date.now().toString(16).slice(-6);
     return `${prefix}${rand}`;
 }
 
 const CreateUser = () => {
     const navigate = useNavigate();
-    const { username, setUserName } = useUser();
+    const { user, setUser } = useUser();
     const [value, setValue] = useState<string>(generateRandUsername);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (user) {
+            navigate('/create-room');
+        }
+    }, [user]);
 
     const onFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
         createUser(value)
             .then((user) => {
-                console.log('user', user);
-                setUserName(user.username);
+                setUser(user.id);
                 navigate('/create-room');
             })
             .catch((err) => {
