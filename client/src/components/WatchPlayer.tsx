@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
 import { OnProgressProps } from 'react-player/base';
 import { useSocket } from '../contexts/SocketContext';
 import { RoomModel } from '../types';
+import { useRoom } from '../contexts/RoomContext';
 
 const WatchPlayer = ({ room }: { room: RoomModel }) => {
     const [justStarted, setJustStarted] = useState<boolean>(true);
     const [playing, setPlaying] = useState<boolean>(true);
     const [volume, setVolume] = useState<number | undefined>(undefined);
-    const { togglePlayPause, playingChanged } = useSocket()!;
+    const { togglePlayPause, playingChanged, queriedTime, sendYourTime } = useSocket()!;
+    const { setPlayerRef, initVideoTime } = useRoom()!;
+    const player = useRef<ReactPlayer>(null);
 
     useEffect(() => {
         if (justStarted) {
@@ -18,6 +21,33 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
         setPlaying(playingChanged);
     }, [playingChanged]);
 
+    useEffect(() => {
+        if (initVideoTime !== undefined && player.current) {
+            player.current.seekTo(initVideoTime);
+        }
+    }, [initVideoTime, player.current]);
+
+    useEffect(() => {
+        if (queriedTime !== undefined && player.current) {
+            // console.log('I QUERIED TIME AND IT IS', queriedTime);
+            player.current.seekTo(queriedTime);
+            // TODO: Should set `queriedTime = undefined` after using it?!
+        }
+    }, [queriedTime, player.current]);
+
+    useEffect(() => {
+        // console.log('Checking for sendYourTime', player.current)
+        if (sendYourTime && player.current) {
+            // console.log('I am sending my time', player.current.getCurrentTime());
+            sendYourTime(player.current.getCurrentTime());
+        }
+    }, [sendYourTime])
+
+
+    const onPlayerReady = (reactPlayer: ReactPlayer) => {
+        // Set player ref
+        setPlayerRef(reactPlayer);
+    }
 
     const onPlayerStart = () => {
         console.log('Player onStart');
@@ -25,20 +55,20 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
 
     const onPlayerPlay = () => {
         console.log('Player onPlay');
-        togglePlayPause(true, room.link);
+        togglePlayPause(true, room.id, player.current!.getCurrentTime());
     }
 
     const onPlayerPause = () => {
         console.log('Player onPause');
-        togglePlayPause(false, room.link);
+        togglePlayPause(false, room.id, player.current!.getCurrentTime());
     }
 
     const onPlayerProgress = (state: OnProgressProps) => {
-        console.log('Player onProgress', state);
+        // console.log('Player onProgress', state);
     }
 
     const onPlayerDuration = (duration: number) => {
-        console.log('Player onDuration', duration);
+        // console.log('Player onDuration', duration);
     }
 
     const onPlayerSeek = (seconds: number) => {
@@ -51,8 +81,9 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
 
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
-                     width='100%' height='100%'
-                     playing={playing} volume={volume}
+                     width='100%' height='100%' ref={player}
+                     playing={playing} volume={volume} muted={true}
+                     onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}
                      onProgress={onPlayerProgress}

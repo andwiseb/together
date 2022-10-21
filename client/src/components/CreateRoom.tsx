@@ -1,7 +1,7 @@
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 import ReactPlayer from 'react-player'
 import Container from 'react-bootstrap/Container';
 import { useNavigate, createSearchParams } from 'react-router-dom';
@@ -25,7 +25,7 @@ const CreateRoom = () => {
     const [urlValidity, setUrlValidity] = useState<boolean>(false);
     const [, setLoading] = useState<boolean>(false);
     const [username, setUsername] = useState<string>('');
-    const { user, setUser } = useUser();
+    const { user, setUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -47,12 +47,12 @@ const CreateRoom = () => {
     }, [user]);
 
 
-    const onFormSubmit = (e: SyntheticEvent) => {
+    /*const onFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
         if ((e.currentTarget as HTMLFormElement).checkValidity() && isValidHttpUrl(url)) {
             console.log('form', e);
         }
-    }
+    }*/
 
     const urlChanged = (e: SyntheticEvent) => {
         const value = (e.target as HTMLInputElement).value;
@@ -76,7 +76,7 @@ const CreateRoom = () => {
         <>
             <h4>Hi: {username}</h4>
             <hr />
-            <Form noValidate onSubmit={onFormSubmit}>
+            <Form noValidate>
                 <Form.Group>
                     <Form.Label>Enter video url:</Form.Label>
                     <InputGroup hasValidation>

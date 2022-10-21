@@ -3,7 +3,7 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import { useLocation, useNavigate } from "react-router-dom";
-import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 import { createUser } from '../services/user-service';
 import { Alert } from 'react-bootstrap';
 import { handleHttpError } from '../services/http-client';
@@ -16,7 +16,7 @@ const generateRandUsername = (): string => {
 
 const CreateUser = () => {
     const navigate = useNavigate();
-    const { user, setUser } = useUser();
+    const { user, setUser } = useAuth();
     const [value, setValue] = useState<string>(generateRandUsername);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -64,7 +64,7 @@ const CreateUser = () => {
             </Form.Group>
             {error && <Alert variant='danger' style={{ marginTop: '1rem' }}>{error}</Alert>}
             <Button variant="primary" type='submit' disabled={loading}>
-                Enter
+                Join
             </Button>
         </Form>
     );

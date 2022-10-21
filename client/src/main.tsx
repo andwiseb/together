@@ -2,18 +2,18 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import App from './App';
-import { UserProvider } from './contexts/UserContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { RoomProvider } from './contexts/RoomContext';
 import { SocketProvider } from './contexts/SocketContext';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
-        <UserProvider>
-            <RoomProvider>
-                <SocketProvider>
+        <AuthProvider>
+            <SocketProvider>
+                <RoomProvider>
                     <App />
-                </SocketProvider>
-            </RoomProvider>
-        </UserProvider>
+                </RoomProvider>
+            </SocketProvider>
+        </AuthProvider>
     </React.StrictMode>
 );

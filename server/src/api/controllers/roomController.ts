@@ -14,7 +14,7 @@ export const getRooms = async (req: Request, res: Response) => {
 export const getRoomById = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        const room = await prisma.room.findUnique({ where: { id } });
+        const room = await prisma.room.findUnique({ where: { id }, include: { roomInfo: true } });
         if (!room) {
             return res.status(404).json({ message: "Room not found!" });
         }
@@ -27,7 +27,7 @@ export const getRoomById = async (req: Request, res: Response) => {
 export const getRoomByLink = async (req: Request, res: Response) => {
     const { link } = req.params;
     try {
-        const room = await prisma.room.findUnique({ where: { link } });
+        const room = await prisma.room.findUnique({ where: { link }, include: { roomInfo: true } });
         if (!room) {
             return res.status(404).json({ message: "Room not found!" });
         }

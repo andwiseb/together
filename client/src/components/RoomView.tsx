@@ -2,16 +2,15 @@ import React, { useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Button from 'react-bootstrap/Button';
-import { Card, Form, InputGroup } from 'react-bootstrap';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getRoomById, getRoomByLink } from '../services/room-service';
+import { Card } from 'react-bootstrap';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { createRoomInfo, getRoomById, getRoomByLink } from '../services/room-service';
 import { RoomModel } from '../types';
-import { useUser } from '../contexts/UserContext';
 import { useSocket } from '../contexts/SocketContext';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
 import WatchPlayer from './WatchPlayer';
-import { getUser } from '../services/user-service';
+import RoomViewersList from './RoomViewersList';
+import RoomLinkShare from './RoomLinkShare';
+import { useRoom } from '../contexts/RoomContext';
 
 const RoomNotFound = () => {
     return <h1>Room not found! :(</h1>;
@@ -20,15 +19,13 @@ const RoomNotFound = () => {
 const RoomView = () => {
     const [params] = useSearchParams();
     const { link } = useParams();
-    const { user, setUser } = useUser();
-    const { joinRoom } = useSocket()!;
+    const { isConnected, joinRoom, queryCurrTime } = useSocket()!;
     const [room, setRoom] = useState<RoomModel | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<any>(null);
-    const [roomLink, setRoomLink] = useState<string>('');
-    const [roomLinkCopied, setRoomLinkCopied] = useState<boolean>(false);
-    const [username, setUsername] = useState<string>('');
-    const navigate = useNavigate();
+    const [isPeer, setIsPeer] = useState<boolean>(false);
+    const [roomClosed, setRoomClosed] = useState<boolean>(false);
+    const { setInitVideoTime } = useRoom()!;
 
     const id = params.get('id');
 
@@ -36,6 +33,7 @@ const RoomView = () => {
         return <RoomNotFound />
     }
 
+    // Fetch Room
     useEffect(() => {
         if (!id && !link) {
             return;
@@ -45,32 +43,42 @@ const RoomView = () => {
 
         (id ? getRoomById(id) : getRoomByLink(link as string))
             .then((room) => {
-                console.log('room', room);
-                joinRoom(room.link, () => console.log('Joined room:', room.link));
-                setRoomLink(window.location.origin + '/' + room.link)
+                // Check if room is closed
+                if (room.roomInfo && !room.roomInfo.isOpened) {
+                    setRoomClosed(true);
+                } else {
+                    joinRoom(room.id, () => console.log('Joined room:', room.link));
+                }
                 setRoom(room);
+
+                if (room.roomInfo) {
+                    setIsPeer(true);
+                    setInitVideoTime(room.roomInfo.currTime);
+                } else {
+                    // Create room info record as sign of room opening
+                    createRoomInfo(room.id);
+                }
             })
             .catch((err) => setError(err))
             .finally(() => setLoading(false));
     }, [id]);
 
+    // If Peer is joined, emit message to ask other users for current video time to seek to it
     useEffect(() => {
-        if (!user) {
-            return;
+        if (isPeer && room) {
+            // Emit message to ask for current room info
+            // console.log('I am about to query current time...');
+            queryCurrTime(room.id);
         }
+    }, [isPeer]);
 
-        getUser(user)
-            .then((res) => setUsername(res.username))
-            .catch((err) => {
-                console.log('load user error', err);
-                if (err && (err.status && err.status === 404 || err.response && err.response.status === 404)) {
-                    // Clear cached user id
-                    setUser('');
-                    // Return to home route, create user
-                    navigate('/');
-                }
-            });
-    }, [user])
+    if (roomClosed) {
+        return <h1>Sorry! Room is closed :(</h1>;
+    }
+
+    if (!isConnected) {
+        return <h1>You're offline, you can't join this Room!</h1>
+    }
 
     return (
         <>
@@ -86,24 +94,9 @@ const RoomView = () => {
                             <Card.Body>
                                 <Card.Title>Room Info:</Card.Title>
                                 <Card.Text as='div'>
-                                    <InputGroup>
-                                        <InputGroup.Text>Share Room link:</InputGroup.Text>
-                                        <Form.Control
-                                            defaultValue={roomLink}
-                                            readOnly
-                                        />
-                                        <CopyToClipboard text={roomLink}
-                                                         onCopy={() => setRoomLinkCopied(true)}>
-                                            <Button variant="outline-secondary">
-                                                {roomLinkCopied ? 'Copied!' : 'Copy'}
-                                            </Button>
-                                        </CopyToClipboard>
-                                    </InputGroup>
+                                    <RoomLinkShare roomLink={room.link} />
                                     <hr />
-                                    <h6>Currently Watching:</h6>
-                                    <ol>
-                                        <li>{username}</li>
-                                    </ol>
+                                    <RoomViewersList />
                                 </Card.Text>
                             </Card.Body>
                         </Card>

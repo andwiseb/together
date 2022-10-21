@@ -11,17 +11,27 @@ datasource db {
 }
 
 model Room {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   mediaUrl  String
-  link      String   @default(cuid()) @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
+  link      String    @unique @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id])
   userId    String
+  roomInfo  RoomInfo?
 }
 
 model User {
   id       String @id @default(uuid())
   username String @unique
   rooms    Room[]
+}
+
+model RoomInfo {
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String   @unique
+  isOpened  Boolean  @default(true)
+  currTime  Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
