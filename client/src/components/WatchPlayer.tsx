@@ -9,7 +9,15 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     const [justStarted, setJustStarted] = useState<boolean>(true);
     const [playing, setPlaying] = useState<boolean>(true);
     const [volume, setVolume] = useState<number | undefined>(undefined);
-    const { togglePlayPause, playingChanged, queriedTime, sendYourTime } = useSocket()!;
+    const {
+        togglePlayPause,
+        playingChanged,
+        queriedTime,
+        sendYourTime,
+        changePlaybackRate,
+        playbackRate
+    } = useSocket()!;
+
     const { setPlayerRef, initVideoTime } = useRoom()!;
     const player = useRef<ReactPlayer>(null);
 
@@ -41,7 +49,22 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
             // console.log('I am sending my time', player.current.getCurrentTime());
             sendYourTime(player.current.getCurrentTime());
         }
-    }, [sendYourTime])
+    }, [sendYourTime]);
+
+    useEffect(() => {
+        if (player.current) {
+            const intPlayer = player.current.getInternalPlayer();
+            if (intPlayer) {
+                if ('setPlaybackRate' in intPlayer) {
+                    // Youtube, Vimeo
+                    intPlayer.setPlaybackRate(playbackRate);
+                } else if ('playbackRate' in intPlayer) {
+                    // Wistia
+                    intPlayer.playbackRate(playbackRate);
+                }
+            }
+        }
+    }, [playbackRate]);
 
 
     const onPlayerReady = (reactPlayer: ReactPlayer) => {
@@ -79,6 +102,11 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
         console.log('Player onError', error, data);
     }
 
+    const onPlayerPlaybackRateChange = (rate: number) => {
+        // console.log('Player onPlaybackRateChange', rate);
+        changePlaybackRate(room.id, rate);
+    }
+
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
@@ -91,6 +119,7 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
+                     onPlaybackRateChange={onPlayerPlaybackRateChange}
                      config={{
                          facebook: {
                              attributes: {

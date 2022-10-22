@@ -16,6 +16,8 @@ interface SocketContextProps {
     sendYourTime?: (time: number) => void;
     userList: string[];
     setUserList: (list: string[]) => void;
+    changePlaybackRate: (roomId: string, rate: number) => void;
+    playbackRate: number;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -36,6 +38,7 @@ export const SocketProvider = ({ children }) => {
     const [queriedTime, setQueriedTime] = useState<number | undefined>();
     const [sendYourTime, setSendYourTime] = useState<(time: number) => void | undefined>();
     const [userList, setUserList] = useState<string[]>([]);
+    const [playbackRate, setPlaybackRate] = useState<number>(1);
 
     useEffect(() => {
         socket.on('connect', () => {
@@ -76,6 +79,10 @@ export const SocketProvider = ({ children }) => {
             setUserList(list);
         });
 
+        socket.on('playback-rate-changed', (rate: number) => {
+            setPlaybackRate(rate);
+        });
+
         return () => {
             socket.off('connect');
             socket.off('connect_error');
@@ -85,6 +92,7 @@ export const SocketProvider = ({ children }) => {
             socket.off('give-your-time');
             socket.off('others-time-is');
             socket.off('room-users-list');
+            socket.off('playback-rate-changed');
         };
     }, [user]);
 
@@ -104,6 +112,10 @@ export const SocketProvider = ({ children }) => {
         socket.emit('query-current-time', roomId);
     }
 
+    const changePlaybackRate = (roomId: string, rate: number) => {
+        socket.emit('playback-rate-changed', roomId, rate);
+    }
+
     return (
         <SocketContext.Provider
             value={{
@@ -117,7 +129,9 @@ export const SocketProvider = ({ children }) => {
                 queriedTime,
                 sendYourTime,
                 userList,
-                setUserList
+                setUserList,
+                changePlaybackRate,
+                playbackRate
             }}
         >
             {children}

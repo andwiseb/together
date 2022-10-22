@@ -68,8 +68,13 @@ export const initSocket = (appServer) => {
         });
 
         socket.on('my-time-is', (time: number, callerSocketId: string) => {
-            console.log(`Client '${callerSocketId}' here is my time`, time);
+            // console.log(`Client '${callerSocketId}' here is my time`, time);
             socket.to(callerSocketId).emit('others-time-is', time);
         });
+
+        socket.on('playback-rate-changed', (room: string, rate: number) => {
+            // console.log(`Client ${socket.id} changed playback rate to ${rate} in room ${room}`);
+            socket.to(room).emit('playback-rate-changed', rate);
+        })
     });
 }
