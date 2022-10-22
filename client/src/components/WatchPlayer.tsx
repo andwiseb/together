@@ -15,7 +15,9 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
         queriedTime,
         sendYourTime,
         changePlaybackRate,
-        playbackRate
+        playbackRate,
+        notifySeekVideo,
+        notifyVideoSeeked
     } = useSocket()!;
 
     const { setPlayerRef } = useRoom()!;
@@ -48,6 +50,12 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     useEffect(() => {
         changePlayBackRate(playbackRate);
     }, [playbackRate, player.current]);
+
+    useEffect(() => {
+        if (notifyVideoSeeked !== undefined && player.current) {
+            player.current.seekTo(notifyVideoSeeked);
+        }
+    }, [notifyVideoSeeked, player.current]);
 
     const changePlayBackRate = (rate: number) => {
         if (player.current) {
@@ -97,6 +105,7 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
 
     const onPlayerSeek = (seconds: number) => {
         console.log('Player onSeek', seconds);
+        notifySeekVideo(room.id, seconds);
     }
 
     const onPlayerError = (error: any, data?: any) => {

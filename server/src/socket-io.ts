@@ -89,6 +89,10 @@ export const initSocket = (appServer) => {
             if (!updateRoomInfoTimeout) {
                 updateRoomInfoFunc(room, { currSpeed: rate });
             }
-        })
+        });
+
+        socket.on('seek-video', (room: string, seconds: number) => {
+            socket.to(room).emit('video-seeked', seconds);
+        });
     });
 }

@@ -18,6 +18,8 @@ interface SocketContextProps {
     setUserList: (list: string[]) => void;
     changePlaybackRate: (roomId: string, rate: number) => void;
     playbackRate: number;
+    notifySeekVideo: (roomId: string, seconds: number) => void;
+    notifyVideoSeeked?: number;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -39,6 +41,7 @@ export const SocketProvider = ({ children }) => {
     const [sendYourTime, setSendYourTime] = useState<(time: number) => void | undefined>();
     const [userList, setUserList] = useState<string[]>([]);
     const [playbackRate, setPlaybackRate] = useState<number>(1);
+    const [notifyVideoSeeked, setNotifyVideoSeeked] = useState<undefined | number>();
 
     useEffect(() => {
         socket.on('connect', () => {
@@ -83,6 +86,10 @@ export const SocketProvider = ({ children }) => {
             setPlaybackRate(rate);
         });
 
+        socket.on('video-seeked', (seconds: number) => {
+            setNotifyVideoSeeked(seconds);
+        });
+
         return () => {
             socket.off('connect');
             socket.off('connect_error');
@@ -93,6 +100,7 @@ export const SocketProvider = ({ children }) => {
             socket.off('others-time-is');
             socket.off('room-users-list');
             socket.off('playback-rate-changed');
+            socket.off('video-seeked');
         };
     }, [user]);
 
@@ -116,6 +124,10 @@ export const SocketProvider = ({ children }) => {
         socket.emit('playback-rate-changed', roomId, rate);
     }
 
+    const notifySeekVideo = (roomId: string, seconds: number) => {
+        socket.emit('seek-video', roomId, seconds);
+    }
+
     return (
         <SocketContext.Provider
             value={{
@@ -131,7 +143,9 @@ export const SocketProvider = ({ children }) => {
                 userList,
                 setUserList,
                 changePlaybackRate,
-                playbackRate
+                playbackRate,
+                notifySeekVideo,
+                notifyVideoSeeked
             }}
         >
             {children}
