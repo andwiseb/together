@@ -4,8 +4,6 @@ import ReactPlayer from 'react-player';
 interface RoomContextProps {
     playerRef?: ReactPlayer;
     setPlayerRef: (ref) => void;
-    initVideoTime?: number;
-    setInitVideoTime: (time: number) => void;
 }
 
 const RoomContext = React.createContext<RoomContextProps | null>(null);
@@ -15,9 +13,8 @@ export const useRoom = () => {
 }
 export const RoomProvider = ({ children }) => {
     const [playerRef, setPlayerRef] = useState(undefined);
-    const [initVideoTime, setInitVideoTime] = useState(0);
     return (
-        <RoomContext.Provider value={{ playerRef, setPlayerRef, initVideoTime, setInitVideoTime }}>
+        <RoomContext.Provider value={{ playerRef, setPlayerRef}}>
             {children}
         </RoomContext.Provider>
     )

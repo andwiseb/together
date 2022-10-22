@@ -18,7 +18,7 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
         playbackRate
     } = useSocket()!;
 
-    const { setPlayerRef, initVideoTime } = useRoom()!;
+    const { setPlayerRef } = useRoom()!;
     const player = useRef<ReactPlayer>(null);
 
     useEffect(() => {
@@ -28,12 +28,6 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
         }
         setPlaying(playingChanged);
     }, [playingChanged]);
-
-    useEffect(() => {
-        if (initVideoTime !== undefined && player.current) {
-            player.current.seekTo(initVideoTime);
-        }
-    }, [initVideoTime, player.current]);
 
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
@@ -52,24 +46,31 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     }, [sendYourTime]);
 
     useEffect(() => {
+        changePlayBackRate(playbackRate);
+    }, [playbackRate, player.current]);
+
+    const changePlayBackRate = (rate: number) => {
         if (player.current) {
             const intPlayer = player.current.getInternalPlayer();
             if (intPlayer) {
                 if ('setPlaybackRate' in intPlayer) {
                     // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(playbackRate);
+                    intPlayer.setPlaybackRate(rate);
                 } else if ('playbackRate' in intPlayer) {
                     // Wistia
-                    intPlayer.playbackRate(playbackRate);
+                    intPlayer.playbackRate(rate);
                 }
             }
         }
-    }, [playbackRate]);
-
+    }
 
     const onPlayerReady = (reactPlayer: ReactPlayer) => {
         // Set player ref
         setPlayerRef(reactPlayer);
+        if (room && room.roomInfo) {
+            reactPlayer.seekTo(room.roomInfo.currTime);
+            changePlayBackRate(room.roomInfo.currSpeed);
+        }
     }
 
     const onPlayerStart = () => {

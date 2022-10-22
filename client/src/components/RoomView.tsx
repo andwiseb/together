@@ -10,7 +10,6 @@ import { useSocket } from '../contexts/SocketContext';
 import WatchPlayer from './WatchPlayer';
 import RoomViewersList from './RoomViewersList';
 import RoomLinkShare from './RoomLinkShare';
-import { useRoom } from '../contexts/RoomContext';
 
 const RoomNotFound = () => {
     return <h1>Room not found! :(</h1>;
@@ -25,7 +24,6 @@ const RoomView = () => {
     const [error, setError] = useState<any>(null);
     const [isPeer, setIsPeer] = useState<boolean>(false);
     const [roomClosed, setRoomClosed] = useState<boolean>(false);
-    const { setInitVideoTime } = useRoom()!;
 
     const id = params.get('id');
 
@@ -53,15 +51,15 @@ const RoomView = () => {
 
                 if (room.roomInfo) {
                     setIsPeer(true);
-                    setInitVideoTime(room.roomInfo.currTime);
                 } else {
                     // Create room info record as sign of room opening
+                    console.log('create room info', room);
                     createRoomInfo(room.id);
                 }
             })
             .catch((err) => setError(err))
             .finally(() => setLoading(false));
-    }, [id]);
+    }, [id, link]);
 
     // If Peer is joined, emit message to ask other users for current video time to seek to it
     useEffect(() => {

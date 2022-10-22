@@ -20,6 +20,7 @@ export interface RoomInfoModel {
     roomId: string;
     isOpened: boolean;
     currTime: number;
+    currSpeed: number;
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }

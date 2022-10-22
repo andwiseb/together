@@ -7,6 +7,16 @@ const usersList = new Map<string, string>();
 
 const DEBOUNCE_TIMEOUT = 500;
 
+const updateRoomInfoFunc = (room, data) => {
+    updateRoomInfoTimeout = setTimeout(
+        async () => {
+            await updateRoomInfo(room, data)
+            clearTimeout(updateRoomInfoTimeout);
+            updateRoomInfoTimeout = 0;
+        }
+        , DEBOUNCE_TIMEOUT);
+}
+
 export const initSocket = (appServer) => {
     io = new Server(appServer, { cors: { origin: process.env.SOCKET_ORIGINS?.split(';') } });
 
@@ -53,13 +63,14 @@ export const initSocket = (appServer) => {
             socket.to(room).emit('toggle-player-state', state);
             // Update room info with current time
             if (!state && !updateRoomInfoTimeout) {
-                updateRoomInfoTimeout = setTimeout(
+                /*updateRoomInfoTimeout = setTimeout(
                     async () => {
                         await updateRoomInfo(room, { currTime: time })
                         clearTimeout(updateRoomInfoTimeout);
                         updateRoomInfoTimeout = 0;
                     }
-                    , DEBOUNCE_TIMEOUT);
+                    , DEBOUNCE_TIMEOUT);*/
+                updateRoomInfoFunc(room, { currTime: time });
             }
         });
 
@@ -75,6 +86,9 @@ export const initSocket = (appServer) => {
         socket.on('playback-rate-changed', (room: string, rate: number) => {
             // console.log(`Client ${socket.id} changed playback rate to ${rate} in room ${room}`);
             socket.to(room).emit('playback-rate-changed', rate);
+            if (!updateRoomInfoTimeout) {
+                updateRoomInfoFunc(room, { currSpeed: rate });
+            }
         })
     });
 }
