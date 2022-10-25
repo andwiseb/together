@@ -6,11 +6,8 @@ let socket: Socket;
 
 interface SocketContextProps {
     isConnected: boolean;
-    lastPong: string | null;
-    sendPing: () => void;
     joinRoom: (roomId: string, callbackFunc?: Function) => void;
     togglePlayPause: (state: boolean, roomId: string, time: number) => void;
-    playingChanged: boolean;
     queryCurrTime: (roomId: string) => void;
     queriedTime: number | undefined;
     sendYourTime?: (time: number) => void;
@@ -18,8 +15,7 @@ interface SocketContextProps {
     setUserList: (list: string[]) => void;
     changePlaybackRate: (roomId: string, rate: number) => void;
     playbackRate: number;
-    notifySeekVideo: (roomId: string, seconds: number) => void;
-    notifyVideoSeeked?: number;
+    socket: Socket;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -35,13 +31,10 @@ export const SocketProvider = ({ children }) => {
     }
 
     const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
-    const [lastPong, setLastPong] = useState<string | null>(null);
-    const [playingChanged, setPlayingChanged] = useState<boolean>(true);
     const [queriedTime, setQueriedTime] = useState<number | undefined>();
     const [sendYourTime, setSendYourTime] = useState<(time: number) => void | undefined>();
     const [userList, setUserList] = useState<string[]>([]);
     const [playbackRate, setPlaybackRate] = useState<number>(1);
-    const [notifyVideoSeeked, setNotifyVideoSeeked] = useState<undefined | number>();
 
     useEffect(() => {
         socket.on('connect', () => {
@@ -56,14 +49,6 @@ export const SocketProvider = ({ children }) => {
 
         socket.on('disconnect', () => {
             setIsConnected(false);
-        });
-
-        socket.on('pong', () => {
-            setLastPong(new Date().toISOString());
-        });
-
-        socket.on('toggle-player-state', (state: boolean) => {
-            setPlayingChanged(state);
         });
 
         socket.on('give-your-time', (callSocketId: string) => {
@@ -86,27 +71,16 @@ export const SocketProvider = ({ children }) => {
             setPlaybackRate(rate);
         });
 
-        socket.on('video-seeked', (seconds: number) => {
-            setNotifyVideoSeeked(seconds);
-        });
-
         return () => {
             socket.off('connect');
             socket.off('connect_error');
             socket.off('disconnect');
-            socket.off('pong');
-            socket.off('toggle-player-state');
             socket.off('give-your-time');
             socket.off('others-time-is');
             socket.off('room-users-list');
             socket.off('playback-rate-changed');
-            socket.off('video-seeked');
         };
     }, [user]);
-
-    const sendPing = () => {
-        socket.emit('ping');
-    }
 
     const joinRoom = (roomId: string, callbackFunc?: Function) => {
         socket.emit('join-room', roomId, callbackFunc);
@@ -124,19 +98,12 @@ export const SocketProvider = ({ children }) => {
         socket.emit('playback-rate-changed', roomId, rate);
     }
 
-    const notifySeekVideo = (roomId: string, seconds: number) => {
-        socket.emit('seek-video', roomId, seconds);
-    }
-
     return (
         <SocketContext.Provider
             value={{
                 isConnected,
-                lastPong,
-                sendPing,
                 joinRoom,
                 togglePlayPause,
-                playingChanged,
                 queryCurrTime,
                 queriedTime,
                 sendYourTime,
@@ -144,8 +111,7 @@ export const SocketProvider = ({ children }) => {
                 setUserList,
                 changePlaybackRate,
                 playbackRate,
-                notifySeekVideo,
-                notifyVideoSeeked
+                socket
             }}
         >
             {children}

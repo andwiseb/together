@@ -31,6 +31,7 @@ model RoomInfo {
   room      Room     @relation(fields: [roomId], references: [id])
   roomId    String   @unique
   isOpened  Boolean  @default(true)
+  isPlaying Boolean  @default(true)
   currTime  Float    @default(0)
   currSpeed Float    @default(1)
   createdAt DateTime @default(now())

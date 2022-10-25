@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -22,7 +22,7 @@ const RoomView = () => {
     const [room, setRoom] = useState<RoomModel | null>(null);
     const [, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<any>(null);
-    const [isPeer, setIsPeer] = useState<boolean>(false);
+    const isPeer = useRef<boolean>(false);
     const [roomClosed, setRoomClosed] = useState<boolean>(false);
 
     const id = params.get('id');
@@ -50,7 +50,7 @@ const RoomView = () => {
                 setRoom(room);
 
                 if (room.roomInfo) {
-                    setIsPeer(true);
+                    isPeer.current = true;
                 } else {
                     // Create room info record as sign of room opening
                     console.log('create room info', room);
@@ -62,13 +62,13 @@ const RoomView = () => {
     }, [id, link]);
 
     // If Peer is joined, emit message to ask other users for current video time to seek to it
-    useEffect(() => {
+    /*useEffect(() => {
         if (isPeer && room) {
             // Emit message to ask for current room info
             // console.log('I am about to query current time...');
             queryCurrTime(room.id);
         }
-    }, [isPeer]);
+    }, [isPeer]);*/
 
     if (roomClosed) {
         return <h1>Sorry! Room is closed :(</h1>;
@@ -84,7 +84,7 @@ const RoomView = () => {
                 <Container>
                     <Row>
                         <Col className='player-wrapper'>
-                            <WatchPlayer room={room} />
+                            <WatchPlayer room={room} isPeer={isPeer.current} />
                         </Col>
                     </Row>
                     <Row>

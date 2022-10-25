@@ -5,44 +5,50 @@ import { useSocket } from '../contexts/SocketContext';
 import { RoomModel } from '../types';
 import { useRoom } from '../contexts/RoomContext';
 
-const WatchPlayer = ({ room }: { room: RoomModel }) => {
-    const [justStarted, setJustStarted] = useState<boolean>(true);
-    const [playing, setPlaying] = useState<boolean>(true);
-    const [volume, setVolume] = useState<number | undefined>(undefined);
+const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => {
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
+    const [volume,] = useState<number | undefined>(undefined);
     const {
         togglePlayPause,
-        playingChanged,
         queriedTime,
         sendYourTime,
         changePlaybackRate,
         playbackRate,
-        notifySeekVideo,
-        notifyVideoSeeked
+        queryCurrTime,
+        socket
     } = useSocket()!;
 
     const { setPlayerRef } = useRoom()!;
     const player = useRef<ReactPlayer>(null);
+    const pauseByCode = useRef<boolean>(false);
+    // Make play accept undefined, so we can ignore first play event when player loaded
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
 
     useEffect(() => {
-        if (justStarted) {
-            setJustStarted(false);
-            return;
-        }
-        setPlaying(playingChanged);
-    }, [playingChanged]);
+        socket.on('toggle-player-state', (state: boolean, time: number | null) => {
+            // console.log('PLAY/PAUSE Change to', state);
+            (state ? playedByCode : pauseByCode).current = true;
+            if (time) {
+                player.current!.seekTo(time);
+            }
+            setPlaying(state);
+        });
+        return () => {
+            socket.off('toggle-player-state');
+        };
+    }, []);
 
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
             // console.log('I QUERIED TIME AND IT IS', queriedTime);
+            playedByCode.current = true;
             player.current.seekTo(queriedTime);
-            // TODO: Should set `queriedTime = undefined` after using it?!
         }
     }, [queriedTime, player.current]);
 
     useEffect(() => {
-        // console.log('Checking for sendYourTime', player.current)
         if (sendYourTime && player.current) {
-            // console.log('I am sending my time', player.current.getCurrentTime());
             sendYourTime(player.current.getCurrentTime());
         }
     }, [sendYourTime]);
@@ -50,12 +56,6 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     useEffect(() => {
         changePlayBackRate(playbackRate);
     }, [playbackRate, player.current]);
-
-    useEffect(() => {
-        if (notifyVideoSeeked !== undefined && player.current) {
-            player.current.seekTo(notifyVideoSeeked);
-        }
-    }, [notifyVideoSeeked, player.current]);
 
     const changePlayBackRate = (rate: number) => {
         if (player.current) {
@@ -75,6 +75,7 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     const onPlayerReady = (reactPlayer: ReactPlayer) => {
         // Set player ref
         setPlayerRef(reactPlayer);
+        // Set default player props using stored room info
         if (room && room.roomInfo) {
             reactPlayer.seekTo(room.roomInfo.currTime);
             changePlayBackRate(room.roomInfo.currSpeed);
@@ -83,20 +84,35 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
 
     const onPlayerStart = () => {
         console.log('Player onStart');
+        if (isPeer) {
+            queryCurrTime(room.id);
+        }
     }
 
     const onPlayerPlay = () => {
         console.log('Player onPlay');
-        togglePlayPause(true, room.id, player.current!.getCurrentTime());
+        setPlaying(true);
+
+        if (playedByCode.current === false) {
+            togglePlayPause(true, room.id, player.current!.getCurrentTime());
+        } else {
+            playedByCode.current = false;
+        }
     }
 
     const onPlayerPause = () => {
         console.log('Player onPause');
-        togglePlayPause(false, room.id, player.current!.getCurrentTime());
+        setPlaying(false);
+
+        if (!pauseByCode.current) {
+            togglePlayPause(false, room.id, player.current!.getCurrentTime());
+        } else {
+            pauseByCode.current = false;
+        }
     }
 
     const onPlayerProgress = (state: OnProgressProps) => {
-        // console.log('Player onProgress', state);
+        // console.log('Player onProgress', state.playedSeconds);
     }
 
     const onPlayerDuration = (duration: number) => {
@@ -105,7 +121,6 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
 
     const onPlayerSeek = (seconds: number) => {
         console.log('Player onSeek', seconds);
-        notifySeekVideo(room.id, seconds);
     }
 
     const onPlayerError = (error: any, data?: any) => {
@@ -113,31 +128,32 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     }
 
     const onPlayerPlaybackRateChange = (rate: number) => {
-        // console.log('Player onPlaybackRateChange', rate);
         changePlaybackRate(room.id, rate);
     }
 
     return (
-        <ReactPlayer className='react-player' controls url={room.mediaUrl}
-                     width='100%' height='100%' ref={player}
-                     playing={playing} volume={volume} muted={true}
-                     onReady={onPlayerReady}
-                     onStart={onPlayerStart}
-                     onPlay={onPlayerPlay}
-                     onProgress={onPlayerProgress}
-                     onDuration={onPlayerDuration}
-                     onPause={onPlayerPause}
-                     onSeek={onPlayerSeek}
-                     onError={onPlayerError}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
-                     config={{
-                         facebook: {
-                             attributes: {
-                                 'data-height': 540,
+        <>
+            <ReactPlayer className='react-player' controls url={room.mediaUrl}
+                         width='100%' height='100%' ref={player}
+                         playing={playing} volume={volume} muted={true}
+                         onReady={onPlayerReady}
+                         onStart={onPlayerStart}
+                         onPlay={onPlayerPlay}
+                         onProgress={onPlayerProgress}
+                         onDuration={onPlayerDuration}
+                         onPause={onPlayerPause}
+                         onSeek={onPlayerSeek}
+                         onError={onPlayerError}
+                         onPlaybackRateChange={onPlayerPlaybackRateChange}
+                         config={{
+                             facebook: {
+                                 attributes: {
+                                     'data-height': 540,
+                                 },
                              },
-                         },
-                     }}
-        />
+                         }}
+            />
+        </>
     );
 };
 

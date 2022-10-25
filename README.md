@@ -4,7 +4,7 @@
 ### Server:
 ```
 cd server
-npm run install
+npm install
 ```
 You need to create the environment file `.env` in `server` directory and put the following:
 ```
@@ -20,7 +20,7 @@ Now you run the server: `npm run devServer`.
 ### Client:
 ```
 cd client
-npm run install
+npm install
 ```
 You need to create the environment file `.env.development` in `client` directory and put the following:
 

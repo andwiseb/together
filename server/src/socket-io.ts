@@ -60,17 +60,12 @@ export const initSocket = (appServer) => {
         });
 
         socket.on('toggle-player-state', (state: boolean, room: string, time) => {
-            socket.to(room).emit('toggle-player-state', state);
+            socket.to(room).emit('toggle-player-state', state, state ? time : null);
             // Update room info with current time
             if (!state && !updateRoomInfoTimeout) {
-                /*updateRoomInfoTimeout = setTimeout(
-                    async () => {
-                        await updateRoomInfo(room, { currTime: time })
-                        clearTimeout(updateRoomInfoTimeout);
-                        updateRoomInfoTimeout = 0;
-                    }
-                    , DEBOUNCE_TIMEOUT);*/
-                updateRoomInfoFunc(room, { currTime: time });
+                updateRoomInfoFunc(room, { currTime: time, isPlaying: false });
+            } else if (state && !updateRoomInfoTimeout) {
+                updateRoomInfoFunc(room, { currTime: time, isPlaying: true });
             }
         });
 
@@ -89,10 +84,6 @@ export const initSocket = (appServer) => {
             if (!updateRoomInfoTimeout) {
                 updateRoomInfoFunc(room, { currSpeed: rate });
             }
-        });
-
-        socket.on('seek-video', (room: string, seconds: number) => {
-            socket.to(room).emit('video-seeked', seconds);
         });
     });
 }
