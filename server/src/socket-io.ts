@@ -62,9 +62,9 @@ export const initSocket = (appServer) => {
         socket.on('toggle-player-state', (state: boolean, room: string, time) => {
             socket.to(room).emit('toggle-player-state', state, state ? time : null);
             // Update room info with current time
-            if (!state && !updateRoomInfoTimeout) {
+            if (!state && !updateRoomInfoTimeout && time) {
                 updateRoomInfoFunc(room, { currTime: time, isPlaying: false });
-            } else if (state && !updateRoomInfoTimeout) {
+            } else if (state && !updateRoomInfoTimeout && time) {
                 updateRoomInfoFunc(room, { currTime: time, isPlaying: true });
             }
         });

@@ -27,7 +27,11 @@ export const useSocket = (): SocketContextProps | null => {
 export const SocketProvider = ({ children }) => {
     const { user } = useAuth();
     if (!socket || socket.disconnected) {
-        socket = io(import.meta.env.VITE_SOCKET_URL, { query: { userId: user }, auth: { userId: user } })
+        socket = io(import.meta.env.VITE_SOCKET_URL, {
+            query: { userId: user },
+            auth: { userId: user },
+            transports: ['websocket', 'polling']
+        })
     }
 
     const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
