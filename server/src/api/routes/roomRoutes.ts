@@ -1,5 +1,12 @@
 import express from 'express';
-import { createRoom, deleteRoom, getRoomById, getRoomByLink, getRooms } from '../controllers/roomController';
+import {
+    createRoom,
+    deleteRoom,
+    getRoomById,
+    getRoomByLink,
+    getRooms,
+    updateRoom
+} from '../controllers/roomController';
 
 const router = express.Router();
 
@@ -11,6 +18,7 @@ router.get('/by-link/:link', getRoomByLink);
 
 router.route('/:id')
     .get(getRoomById)
-    .delete(deleteRoom);
+    .delete(deleteRoom)
+    .patch(updateRoom);
 
 export default router;

@@ -29,10 +29,6 @@ const CreateRoom = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setUrlValidity(isValidHttpUrl(url) && ReactPlayer.canPlay(url));
-    }, [url]);
-
-    useEffect(() => {
         getUser(user)
             .then((userObj) => setUsername(userObj.username))
             .catch((err) => {
@@ -47,16 +43,14 @@ const CreateRoom = () => {
     }, [user]);
 
 
-    /*const onFormSubmit = (e: SyntheticEvent) => {
+    const onFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
-        if ((e.currentTarget as HTMLFormElement).checkValidity() && isValidHttpUrl(url)) {
-            console.log('form', e);
-        }
-    }*/
+    }
 
     const urlChanged = (e: SyntheticEvent) => {
         const value = (e.target as HTMLInputElement).value;
         setUrl(value);
+        setUrlValidity(isValidHttpUrl(value) && ReactPlayer.canPlay(value));
     }
 
     const navigateToRoom = () => {
@@ -76,7 +70,7 @@ const CreateRoom = () => {
         <>
             <h4>Hi: {username}</h4>
             <hr />
-            <Form noValidate>
+            <Form noValidate onSubmit={onFormSubmit}>
                 <Form.Group>
                     <Form.Label>Enter video url:</Form.Label>
                     <InputGroup hasValidation>

@@ -85,5 +85,13 @@ export const initSocket = (appServer) => {
                 updateRoomInfoFunc(room, { currSpeed: rate });
             }
         });
+
+        socket.on('close-room', (room: string) => {
+            socket.to(room).emit('room-closed');
+        });
+
+        socket.on('change-media-url', (room: string, mediaUrl: string) => {
+            io.to(room).emit('media-url-changed', mediaUrl);
+        });
     });
 }

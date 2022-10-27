@@ -23,3 +23,14 @@ export const createRoomInfo = async (roomId: string): Promise<RoomInfoModel> => 
     return await infoClient.post('/', { roomId })
         .then((res) => res.data);
 }
+
+export const closeRoom = async (roomId: string): Promise<void> => {
+    return await infoClient.patch(`/${roomId}`, { isOpened: false });
+}
+
+export const changeRoomMediaUrl = async (roomId: string, mediaUrl: string) => {
+    return await Promise.all([
+        infoClient.patch(`/${roomId}`, { currTime: 0, currSpeed: 1, isPlaying: false }),
+        client.patch(`/${roomId}`, { mediaUrl }),
+    ]);
+}

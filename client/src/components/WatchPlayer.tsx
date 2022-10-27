@@ -84,6 +84,7 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
 
     const onPlayerStart = () => {
         console.log('Player onStart');
+        // If Peer is joined, emit message to ask other users for current video time to seek to it
         if (isPeer) {
             queryCurrTime(room.id);
         }

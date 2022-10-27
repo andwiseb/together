@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 let socket: Socket;
 
 interface SocketContextProps {
+    socket: Socket;
     isConnected: boolean;
     joinRoom: (roomId: string, callbackFunc?: Function) => void;
     togglePlayPause: (state: boolean, roomId: string, time: number) => void;
@@ -15,7 +16,8 @@ interface SocketContextProps {
     setUserList: (list: string[]) => void;
     changePlaybackRate: (roomId: string, rate: number) => void;
     playbackRate: number;
-    socket: Socket;
+    closeRoom: (roomId: string) => void;
+    changeMediaUrl: (roomId: string, mediaUrl: string) => void;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -102,6 +104,14 @@ export const SocketProvider = ({ children }) => {
         socket.emit('playback-rate-changed', roomId, rate);
     }
 
+    const closeRoom = (roomId: string) => {
+        socket.emit('close-room', roomId);
+    }
+
+    const changeMediaUrl = (roomId: string, mediaUrl: string) => {
+        socket.emit('change-media-url', roomId, mediaUrl);
+    }
+
     return (
         <SocketContext.Provider
             value={{
@@ -115,7 +125,9 @@ export const SocketProvider = ({ children }) => {
                 setUserList,
                 changePlaybackRate,
                 playbackRate,
-                socket
+                socket,
+                closeRoom,
+                changeMediaUrl
             }}
         >
             {children}

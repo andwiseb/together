@@ -9,7 +9,7 @@ import { RoomModel } from '../types';
 import { useSocket } from '../contexts/SocketContext';
 import WatchPlayer from './WatchPlayer';
 import RoomViewersList from './RoomViewersList';
-import RoomLinkShare from './RoomLinkShare';
+import RoomMediaUrl from './RoomMediaUrl';
 
 const RoomNotFound = () => {
     return <h1>Room not found! :(</h1>;
@@ -18,7 +18,7 @@ const RoomNotFound = () => {
 const RoomView = () => {
     const [params] = useSearchParams();
     const { link } = useParams();
-    const { isConnected, joinRoom, queryCurrTime } = useSocket()!;
+    const { isConnected, joinRoom, socket } = useSocket()!;
     const [room, setRoom] = useState<RoomModel | null>(null);
     const [, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<any>(null);
@@ -53,29 +53,36 @@ const RoomView = () => {
                     isPeer.current = true;
                 } else {
                     // Create room info record as sign of room opening
-                    console.log('create room info', room);
                     createRoomInfo(room.id);
                 }
             })
             .catch((err) => setError(err))
             .finally(() => setLoading(false));
-    }, [id, link]);
 
-    // If Peer is joined, emit message to ask other users for current video time to seek to it
-    /*useEffect(() => {
-        if (isPeer && room) {
-            // Emit message to ask for current room info
-            // console.log('I am about to query current time...');
-            queryCurrTime(room.id);
+        socket.on('room-closed', () => setRoomClosed(true));
+        socket.on('media-url-changed', (newMediaUrl: string) => {
+            console.log('MEDIA URL CHANGED TO', newMediaUrl);
+            setRoom((prevRoom) =>
+                ({
+                    ...prevRoom!,
+                    mediaUrl: newMediaUrl,
+                    roomInfo: { ...prevRoom!.roomInfo!, currSpeed: 1, currTime: 0, isPlaying: false }
+                })
+            );
+        });
+
+        return () => {
+            socket.off('room-closed');
+            socket.off('media-url-changed');
         }
-    }, [isPeer]);*/
+    }, []);
 
     if (roomClosed) {
         return <h1>Sorry! Room is closed :(</h1>;
     }
 
     if (!isConnected) {
-        return <h1>You're offline, you can't join this Room!</h1>
+        return <h1>You're offline, you can't join/watch this room right now!</h1>
     }
 
     return (
@@ -92,7 +99,7 @@ const RoomView = () => {
                             <Card.Body>
                                 <Card.Title>Room Info:</Card.Title>
                                 <Card.Text as='div'>
-                                    <RoomLinkShare roomLink={room.link} />
+                                    <RoomMediaUrl room={room} canChangeMedia canCloseRoom />
                                     <hr />
                                     <RoomViewersList />
                                 </Card.Text>

@@ -64,3 +64,14 @@ export const deleteRoom = async (req: Request, res: Response) => {
         res.status(400).json(error);
     }
 }
+
+export const updateRoom = async  (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        const room = await prisma.room.update({ where: { id }, data: req.body });
+        res.json(room);
+    } catch (error) {
+        res.status(400).json(error);
+    }
+}
