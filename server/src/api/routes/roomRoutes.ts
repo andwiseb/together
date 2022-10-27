@@ -7,18 +7,19 @@ import {
     getRooms,
     updateRoom
 } from '../controllers/roomController';
+import { auth } from '../middlewares/authentication';
 
 const router = express.Router();
 
 router.route('/')
-    .get(getRooms)
-    .post(createRoom);
+    .get(auth, getRooms)
+    .post(auth, createRoom);
 
 router.get('/by-link/:link', getRoomByLink);
 
 router.route('/:id')
-    .get(getRoomById)
-    .delete(deleteRoom)
-    .patch(updateRoom);
+    .get(auth, getRoomById)
+    .delete(auth, deleteRoom)
+    .patch(auth, updateRoom);
 
 export default router;

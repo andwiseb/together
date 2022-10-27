@@ -4,15 +4,21 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { Card } from 'react-bootstrap';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { createRoomInfo, getRoomById, getRoomByLink } from '../services/room-service';
 import { RoomModel } from '../types';
 import { useSocket } from '../contexts/SocketContext';
 import WatchPlayer from './WatchPlayer';
 import RoomViewersList from './RoomViewersList';
 import RoomMediaUrl from './RoomMediaUrl';
+import { RoomService } from '../services/room-service';
+import { useAuth } from '../contexts/AuthContext';
+import { handleHttpError } from '../services/http-client';
 
 const RoomNotFound = () => {
     return <h1>Room not found! :(</h1>;
+}
+
+const ErrorDisplay = ({ error }) => {
+    return <h1>{typeof error === 'string' ? error : JSON.stringify(error)}</h1>;
 }
 
 const RoomView = () => {
@@ -20,10 +26,12 @@ const RoomView = () => {
     const { link } = useParams();
     const { isConnected, joinRoom, socket } = useSocket()!;
     const [room, setRoom] = useState<RoomModel | null>(null);
-    const [, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<any>(null);
     const isPeer = useRef<boolean>(false);
     const [roomClosed, setRoomClosed] = useState<boolean>(false);
+    const { user } = useAuth()!;
+    const roomService = new RoomService(user.id);
 
     const id = params.get('id');
 
@@ -39,7 +47,7 @@ const RoomView = () => {
 
         setLoading(true);
 
-        (id ? getRoomById(id) : getRoomByLink(link as string))
+        (id ? roomService.getRoomById(id) : roomService.getRoomByLink(link as string))
             .then((room) => {
                 // Check if room is closed
                 if (room.roomInfo && !room.roomInfo.isOpened) {
@@ -53,15 +61,14 @@ const RoomView = () => {
                     isPeer.current = true;
                 } else {
                     // Create room info record as sign of room opening
-                    createRoomInfo(room.id);
+                    roomService.createRoomInfo(room.id);
                 }
             })
-            .catch((err) => setError(err))
+            .catch((err) => setError(handleHttpError(err)))
             .finally(() => setLoading(false));
 
         socket.on('room-closed', () => setRoomClosed(true));
         socket.on('media-url-changed', (newMediaUrl: string) => {
-            console.log('MEDIA URL CHANGED TO', newMediaUrl);
             setRoom((prevRoom) =>
                 ({
                     ...prevRoom!,
@@ -75,7 +82,11 @@ const RoomView = () => {
             socket.off('room-closed');
             socket.off('media-url-changed');
         }
-    }, []);
+    }, [socket]);
+
+    if (loading) {
+        return <h1>Loading Room ...</h1>;
+    }
 
     if (roomClosed) {
         return <h1>Sorry! Room is closed :(</h1>;
@@ -107,7 +118,7 @@ const RoomView = () => {
                         </Card>
                     </Row>
                 </Container> :
-                error ? <RoomNotFound /> : <h1>Loading Room ...</h1>
+                <ErrorDisplay error={error} />
             }
         </>
     );

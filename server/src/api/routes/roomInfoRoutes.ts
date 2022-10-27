@@ -6,17 +6,18 @@ import {
     getRoomsInfo,
     updateRoomInfoHandler
 } from '../controllers/roomInfoController';
+import { auth } from '../middlewares/authentication';
 
 const router = express.Router();
 
 router.route('/')
-    .get(getRoomsInfo)
-    .post(createRoomInfo);
+    .get(auth, getRoomsInfo)
+    .post(auth, createRoomInfo);
 
 
 router.route('/:id')
-    .get(getRoomInfoById)
-    .delete(deleteRoomInfo)
-    .patch(updateRoomInfoHandler);
+    .get(auth, getRoomInfoById)
+    .delete(auth, deleteRoomInfo)
+    .patch(auth, updateRoomInfoHandler);
 
 export default router;

@@ -1,12 +1,13 @@
 import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { Form, InputGroup } from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';
-import { changeRoomMediaUrl, closeRoom } from '../services/room-service';
 import { RoomModel } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
 import ReactPlayer from 'react-player';
 import RoomShareButton from './RoomShareButton';
+import { useAuth } from '../contexts/AuthContext';
+import { RoomService } from '../services/room-service';
 
 interface RoomMediaUrlProps {
     room: RoomModel;
@@ -19,13 +20,15 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     const navigate = useNavigate();
     const [url, setUrl] = useState<string>(room.mediaUrl);
     const [urlValidity, setUrlValidity] = useState<boolean>(true);
+    const { user } = useAuth()!;
+    const roomService = new RoomService(user.id);
 
     useEffect(() => {
         changeMediaUrl(room.mediaUrl);
     }, [room]);
 
     const closeRoomHandler = () => {
-        closeRoom(room.id)
+        roomService.closeRoom(room.id)
             .then(() => {
                 socketCloseRoom(room.id);
                 navigate('/');
@@ -34,7 +37,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     }
 
     const changeMediaUrlHandler = () => {
-        changeRoomMediaUrl(room.id, url)
+        roomService.changeRoomMediaUrl(room.id, url)
             .then(() => socketChangeMediaUrl(room.id, url))
             .catch(err => console.log('Room change media url error', err));
     }
@@ -59,7 +62,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
         <Form noValidate>
             <Form.Group>
                 <div className='d-flex gap-2 align-items-baseline'>
-                    <InputGroup className='mb-3'>
+                    <InputGroup>
                         <InputGroup.Text>Media Url:</InputGroup.Text>
                         <Form.Control
                             value={url}

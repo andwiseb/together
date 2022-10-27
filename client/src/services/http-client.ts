@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-export const createClient = (route: string) => {
+export const createClient = (route: string, token?: string) => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
     return axios.create({
-        baseURL: import.meta.env.VITE_API_URL + route
+        baseURL: import.meta.env.VITE_API_URL + route,
+        headers
     });
 };
 

@@ -40,8 +40,7 @@ export const getRoomByLink = async (req: Request, res: Response) => {
 export const createRoom = async (req: Request, res: Response) => {
     const { mediaUrl } = req.body;
     try {
-        // TODO: this get from the authorized user, for now use the first user
-        const user = (await prisma.user.findFirst())?.id;
+        const user = req['user'];
         if (!user) {
             return res.status(403).json({ message: "Not authorized to execute this process." })
         }

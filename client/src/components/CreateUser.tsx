@@ -4,7 +4,7 @@ import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
-import { createUser } from '../services/user-service';
+import { UserService } from '../services/user-service';
 import { Alert } from 'react-bootstrap';
 import { handleHttpError } from '../services/http-client';
 
@@ -14,9 +14,11 @@ const generateRandUsername = (): string => {
     return `${prefix}${rand}`;
 }
 
+const userService = new UserService();
+
 const CreateUser = () => {
     const navigate = useNavigate();
-    const { user, setUser } = useAuth();
+    const { user, setUser } = useAuth()!;
     const [value, setValue] = useState<string>(generateRandUsername);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -31,9 +33,9 @@ const CreateUser = () => {
     const onFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
-        createUser(value)
+        userService.createUser(value)
             .then((user) => {
-                setUser(user.id);
+                setUser(user);
                 // navigate('/create-room');
             })
             .catch((err) => {

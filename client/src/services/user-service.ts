@@ -1,14 +1,21 @@
 import { UserModel } from '../types';
 import { createClient } from './http-client';
+import { AxiosInstance } from 'axios';
 
-const client = createClient('/users');
+export class UserService {
+    private client: AxiosInstance;
 
-export const createUser = async (username: string): Promise<UserModel> => {
-    return await client.post('/', { username: username })
-        .then((res) => res.data);
-}
+    constructor() {
+        this.client = createClient('/users');
+    }
 
-export const getUser = async (id: string): Promise<UserModel> => {
-    return await client.get(`/${id}`)
-        .then((res) => res.data);
+    createUser = async (username: string): Promise<UserModel> => {
+        return await this.client.post('/', { username: username })
+            .then((res) => res.data);
+    }
+
+    getUser = async (id: string): Promise<UserModel> => {
+        return await this.client.get(`/${id}`)
+            .then((res) => res.data);
+    }
 }

@@ -27,16 +27,16 @@ export const useSocket = (): SocketContextProps | null => {
 }
 
 export const SocketProvider = ({ children }) => {
-    const { user } = useAuth();
+    const { user } = useAuth()!;
     if (!socket || socket.disconnected) {
         socket = io(import.meta.env.VITE_SOCKET_URL, {
-            query: { userId: user },
-            auth: { userId: user },
+            query: { userId: user.id },
+            auth: { userId: user.id },
             transports: ['websocket', 'polling']
-        })
+        });
     }
 
-    const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
+    const [isConnected, setIsConnected] = useState<boolean>(false);
     const [queriedTime, setQueriedTime] = useState<number | undefined>();
     const [sendYourTime, setSendYourTime] = useState<(time: number) => void | undefined>();
     const [userList, setUserList] = useState<string[]>([]);

@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useSocket } from '../contexts/SocketContext';
-import { getUser } from '../services/user-service';
+import { UserService } from '../services/user-service';
 import { useAuth } from '../contexts/AuthContext';
+
+const userService = new UserService();
 
 const RoomViewersList = () => {
     const { userList } = useSocket()!;
-    const { user } = useAuth();
+    const { user } = useAuth()!;
     const [viewersNameList, setViewersNameList] = useState<string[]>([]);
 
     useEffect(() => {
         if (userList && userList.length) {
-            Promise.all([user, ...userList.filter(x => x !== user)]
-                .map(uid => getUser(uid)))
-                .then((data) => setViewersNameList(data.map(u => u.username)));
+            Promise.all([...userList.filter(x => x !== user.id)]
+                .map(uid => userService.getUser(uid)))
+                .then((data) =>
+                    setViewersNameList([user.username, ...data.map(u => u.username)])
+                );
         }
     }, [userList]);
 

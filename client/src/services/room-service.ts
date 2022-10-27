@@ -1,36 +1,44 @@
 import { RoomInfoModel, RoomModel } from '../types';
 import { createClient } from './http-client';
+import { AxiosInstance } from 'axios';
 
-const client = createClient('/rooms');
-const infoClient = createClient('/rooms-info');
+export class RoomService {
+    client: AxiosInstance;
+    infoClient: AxiosInstance;
 
-export const createRoom = async (mediaUrl: string): Promise<RoomModel> => {
-    return await client.post('/', { mediaUrl })
-        .then((res) => res.data);
-}
+    constructor(token: string | undefined = '') {
+        this.client = createClient('/rooms', token);
+        this.infoClient = createClient('/rooms-info', token);
+    }
 
-export const getRoomById = async (id: string): Promise<RoomModel> => {
-    return await client.get(`/${id}`)
-        .then((res) => res.data);
-}
+    createRoom = async (mediaUrl: string): Promise<RoomModel> => {
+        return await this.client.post('/', { mediaUrl })
+            .then((res) => res.data);
+    }
 
-export const getRoomByLink = async (link: string): Promise<RoomModel> => {
-    return await client.get(`/by-link/${link}`)
-        .then((res) => res.data);
-}
+    getRoomById = async (id: string): Promise<RoomModel> => {
+        return await this.client.get(`/${id}`)
+            .then((res) => res.data);
+    }
 
-export const createRoomInfo = async (roomId: string): Promise<RoomInfoModel> => {
-    return await infoClient.post('/', { roomId })
-        .then((res) => res.data);
-}
+    getRoomByLink = async (link: string): Promise<RoomModel> => {
+        return await this.client.get(`/by-link/${link}`)
+            .then((res) => res.data);
+    }
 
-export const closeRoom = async (roomId: string): Promise<void> => {
-    return await infoClient.patch(`/${roomId}`, { isOpened: false });
-}
+    createRoomInfo = async (roomId: string): Promise<RoomInfoModel> => {
+        return await this.infoClient.post('/', { roomId })
+            .then((res) => res.data);
+    }
 
-export const changeRoomMediaUrl = async (roomId: string, mediaUrl: string) => {
-    return await Promise.all([
-        infoClient.patch(`/${roomId}`, { currTime: 0, currSpeed: 1, isPlaying: false }),
-        client.patch(`/${roomId}`, { mediaUrl }),
-    ]);
+    closeRoom = async (roomId: string): Promise<void> => {
+        return await this.infoClient.patch(`/${roomId}`, { isOpened: false });
+    }
+
+    changeRoomMediaUrl = async (roomId: string, mediaUrl: string) => {
+        return await Promise.all([
+            this.infoClient.patch(`/${roomId}`, { currTime: 0, currSpeed: 1, isPlaying: false }),
+            this.client.patch(`/${roomId}`, { mediaUrl }),
+        ]);
+    }
 }
