@@ -10,6 +10,8 @@ export interface RoomModel {
     link: string;
     user?: UserModel;
     userId: string;
+    admin?: UserModel;
+    adminId: string;
     roomInfo?: RoomInfoModel;
     readonly createdAt: Date;
     readonly updatedAt: Date;

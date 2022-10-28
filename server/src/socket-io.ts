@@ -1,5 +1,8 @@
 import { Server } from "socket.io";
 import { updateRoomInfo } from './api/controllers/roomInfoController';
+import { getUserById } from './api/controllers/userController';
+import { getRoomById, updateRoom } from './api/controllers/roomController';
+import { Room } from '@prisma/client';
 
 let io: Server;
 let updateRoomInfoTimeout: any = 0;
@@ -17,13 +20,43 @@ const updateRoomInfoFunc = (room, data) => {
         , DEBOUNCE_TIMEOUT);
 }
 
+const checkRoomAdmin = async (roomId: string, userId: string, allUsers: string[]): Promise<string | null> => {
+    console.log('User:', userId, 'leave-room:', roomId,);
+    // Get room by id
+    let room: Room | null = null;
+    try {
+        room = await getRoomById(roomId);
+    } catch (error) {
+        console.error(`Fetch room ${roomId} is Failed. Reason:`, error);
+    }
+
+    if (!room) {
+        return Promise.resolve(null);
+    }
+
+    // Check if the leaved socket is the admin of the room
+    if (room.adminId === userId) {
+        try {
+            // Make the first socket as the admin of the room
+            await updateRoom(roomId, { adminId: allUsers[0] });
+        } catch (err) {
+            console.error(`Failed to assign Room admin to user ${userId}. Reason:`, err);
+        }
+
+        return Promise.resolve(allUsers[0]);
+    }
+    return Promise.resolve(null);
+}
+
 export const initSocket = (appServer) => {
     io = new Server(appServer, { cors: { origin: process.env.SOCKET_ORIGINS?.split(';') } });
 
     // Refuse connection from socket without auth data
     io.use((socket, next) => {
         if (socket.handshake.auth?.userId) {
-            next();
+            getUserById(socket.handshake.auth?.userId)
+                .then(() => next())
+                .catch((err) => next(new Error(err?.message)));
         } else {
             next(new Error('Invalid credentials'));
         }
@@ -51,11 +84,18 @@ export const initSocket = (appServer) => {
             const rooms = Array.from(socket.rooms.keys()).filter(x => x !== socket.id);
             for (const room of rooms) {
                 const allUsers = (await socket.in(room).fetchSockets())?.map(u => u.data.userId);
-                socket.to(room).emit('room-users-list', allUsers);
+                if (allUsers.length) {
+                    const newAdmin = await checkRoomAdmin(room, socket.data.userId, allUsers);
+                    if (newAdmin) {
+                        socket.to(room).emit('new-admin', newAdmin);
+                    }
+                    socket.to(room).emit('room-users-list', allUsers);
+                }
             }
         });
 
         socket.on('disconnect', async () => {
+            console.log(`Socket ${socket.id} disconnected.`);
             usersList.delete(socket.data.userId);
         });
 

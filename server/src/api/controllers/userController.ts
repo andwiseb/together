@@ -11,10 +11,14 @@ export const getUsers = async (req: Request, res: Response) => {
     }
 }
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = async (id: string) => {
+    return await prisma.user.findUnique({ where: { id } });
+}
+
+export const getUserByIdHandler = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        const user = await prisma.user.findUnique({ where: { id } });
+        const user = await getUserById(id);
         if (!user) {
             return res.status(404).json({ message: "User not found!" });
         }

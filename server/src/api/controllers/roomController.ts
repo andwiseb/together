@@ -1,5 +1,6 @@
 import { prisma } from '../../db-connection';
 import { Request, Response } from 'express';
+import { Room } from '@prisma/client';
 
 export const getRooms = async (req: Request, res: Response) => {
     try {
@@ -11,10 +12,14 @@ export const getRooms = async (req: Request, res: Response) => {
     }
 }
 
-export const getRoomById = async (req: Request, res: Response) => {
+export const getRoomById = async (id: string) => {
+    return await prisma.room.findUnique({ where: { id }, include: { roomInfo: true } });
+}
+
+export const getRoomByIdHandler = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        const room = await prisma.room.findUnique({ where: { id }, include: { roomInfo: true } });
+        const room = await getRoomById(id);
         if (!room) {
             return res.status(404).json({ message: "Room not found!" });
         }
@@ -47,7 +52,7 @@ export const createRoom = async (req: Request, res: Response) => {
         if (!mediaUrl) {
             return res.status(400).json({ message: "medial url is required." })
         }
-        const room = await prisma.room.create({ data: { mediaUrl: mediaUrl, userId: user } });
+        const room = await prisma.room.create({ data: { mediaUrl: mediaUrl, userId: user, adminId: user } });
         res.status(201).json(room);
     } catch (error) {
         res.status(400).json(error);
@@ -64,11 +69,15 @@ export const deleteRoom = async (req: Request, res: Response) => {
     }
 }
 
-export const updateRoom = async  (req: Request, res: Response) => {
+export const updateRoom = async (id: string, data: Partial<Room>) => {
+    return await prisma.room.update({ where: { id }, data });
+}
+
+export const updateRoomHandler = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const room = await prisma.room.update({ where: { id }, data: req.body });
+        const room = await updateRoom(id, req.body);
         res.json(room);
     } catch (error) {
         res.status(400).json(error);

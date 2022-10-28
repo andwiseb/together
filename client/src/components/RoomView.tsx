@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -34,6 +34,10 @@ const RoomView = () => {
     const roomService = new RoomService(user.id);
 
     const id = params.get('id');
+
+    const isAdmin = useCallback((): boolean => {
+        return room?.adminId === user.id;
+    }, [user, room]);
 
     if (!id && !link) {
         return <RoomNotFound />
@@ -77,10 +81,16 @@ const RoomView = () => {
                 })
             );
         });
+        socket.on('new-admin', (userId: string) => {
+            setRoom((prevRoom) => ({
+                ...prevRoom!, adminId: userId
+            }));
+        });
 
         return () => {
             socket.off('room-closed');
             socket.off('media-url-changed');
+            socket.off('new-admin');
         }
     }, [socket]);
 
@@ -110,9 +120,11 @@ const RoomView = () => {
                             <Card.Body>
                                 <Card.Title>Room Info:</Card.Title>
                                 <Card.Text as='div'>
-                                    <RoomMediaUrl room={room} canChangeMedia canCloseRoom />
+                                    <RoomMediaUrl room={room}
+                                                  canChangeMedia={true}
+                                                  canCloseRoom={isAdmin()} />
                                     <hr />
-                                    <RoomViewersList />
+                                    <RoomViewersList room={room} />
                                 </Card.Text>
                             </Card.Body>
                         </Card>

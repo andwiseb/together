@@ -2,10 +2,10 @@ import express from 'express';
 import {
     createRoom,
     deleteRoom,
-    getRoomById,
+    getRoomByIdHandler,
     getRoomByLink,
     getRooms,
-    updateRoom
+    updateRoomHandler
 } from '../controllers/roomController';
 import { auth } from '../middlewares/authentication';
 
@@ -18,8 +18,8 @@ router.route('/')
 router.get('/by-link/:link', getRoomByLink);
 
 router.route('/:id')
-    .get(auth, getRoomById)
+    .get(auth, getRoomByIdHandler)
     .delete(auth, deleteRoom)
-    .patch(auth, updateRoom);
+    .patch(auth, updateRoomHandler);
 
 export default router;
