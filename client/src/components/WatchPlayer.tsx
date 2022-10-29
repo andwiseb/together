@@ -64,7 +64,7 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
                 if ('setPlaybackRate' in intPlayer) {
                     // Youtube, Vimeo
                     intPlayer.setPlaybackRate(rate);
-                } else if ('playbackRate' in intPlayer) {
+                } else if ('playbackRate' in intPlayer && typeof intPlayer.playbackRate === 'function') {
                     // Wistia
                     intPlayer.playbackRate(rate);
                 }
