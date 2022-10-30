@@ -7,13 +7,11 @@ import { RoomProvider } from './contexts/RoomContext';
 import { SocketProvider } from './contexts/SocketContext';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-    <React.StrictMode>
-        <AuthProvider>
-            <SocketProvider>
-                <RoomProvider>
-                    <App />
-                </RoomProvider>
-            </SocketProvider>
-        </AuthProvider>
-    </React.StrictMode>
+    <AuthProvider>
+        <SocketProvider>
+            <RoomProvider>
+                <App />
+            </RoomProvider>
+        </SocketProvider>
+    </AuthProvider>
 );

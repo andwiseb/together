@@ -24,18 +24,26 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
+    const mediaUrlChanged = useRef(false);
 
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
             // console.log('PLAY/PAUSE Change to', state);
             (state ? playedByCode : pauseByCode).current = true;
             if (time) {
-                player.current!.seekTo(time);
+                player.current!.seekTo(time, 'seconds');
             }
             setPlaying(state);
         });
+
+        // Get listener handler of this event because we have 2 listeners for it
+        const mediaChangeEventListener = socket.on('media-url-changed', () => {
+            mediaUrlChanged.current = true;
+        });
+
         return () => {
             socket.off('toggle-player-state');
+            socket.off('media-url-changed', mediaChangeEventListener as any);
         };
     }, []);
 
@@ -43,7 +51,7 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         if (queriedTime !== undefined && player.current) {
             // console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
-            player.current.seekTo(queriedTime);
+            player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
 
@@ -72,21 +80,36 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         }
     }
 
+    const setPlayerDefaults = () => {
+        // Set default player props using stored room info
+        if (room && room.roomInfo && player.current) {
+            // console.log('SETTING DEF ROOM INFO', room.roomInfo);
+            player.current.seekTo(room.roomInfo.currTime, 'seconds');
+            changePlayBackRate(room.roomInfo.currSpeed);
+        }
+    }
+
     const onPlayerReady = (reactPlayer: ReactPlayer) => {
+        console.log('Player onReady');
         // Set player ref
         setPlayerRef(reactPlayer);
-        // Set default player props using stored room info
-        if (room && room.roomInfo) {
-            reactPlayer.seekTo(room.roomInfo.currTime);
-            changePlayBackRate(room.roomInfo.currSpeed);
+        if (!playing) {
+            setPlayerDefaults();
         }
     }
 
     const onPlayerStart = () => {
         console.log('Player onStart');
-        // If Peer is joined, emit message to ask other users for current video time to seek to it
-        if (isPeer) {
-            queryCurrTime(room.id);
+        setPlayerDefaults();
+
+        // Don't query for current time when media-url changed
+        if (mediaUrlChanged.current) {
+            mediaUrlChanged.current = false;
+        } else {
+            // If Peer is joined, emit message to ask other users for current video time to seek to it
+            if (isPeer) {
+                queryCurrTime(room.id);
+            }
         }
     }
 

@@ -72,7 +72,7 @@ const RoomView = () => {
             .finally(() => setLoading(false));
 
         socket.on('room-closed', () => setRoomClosed(true));
-        socket.on('media-url-changed', (newMediaUrl: string) => {
+        const mediaChangeEventListener = socket.on('media-url-changed', (newMediaUrl: string) => {
             setRoom((prevRoom) =>
                 ({
                     ...prevRoom!,
@@ -89,7 +89,7 @@ const RoomView = () => {
 
         return () => {
             socket.off('room-closed');
-            socket.off('media-url-changed');
+            socket.off('media-url-changed', mediaChangeEventListener as any);
             socket.off('new-admin');
         }
     }, [socket]);
