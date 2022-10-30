@@ -1,10 +1,11 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { config } from 'dotenv'
 import { connectDB } from './src/db-connection';
 import { createServer } from "http";
 import { initSocket } from './src/socket-io';
+import { join } from 'path';
 
 import roomRoutes from './src/api/routes/roomRoutes';
 import userRoutes from './src/api/routes/userRoutes';
@@ -19,6 +20,7 @@ connectDB();
 const port = process.env.PORT || 3000;
 const app = express();
 const httpServer = createServer(app);
+// Init the socket.io server
 initSocket(httpServer);
 
 app.use(express.json({ limit: '25mb' }));
@@ -28,9 +30,18 @@ app.use(cors());
 // Http logger
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 
+// Serve the front-end from its directory
+// app.use(express.static("dist-client"));
+
+// Declare the API routes
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms-info', roomInfoRoutes);
+
+// Allow routing from the front-end
+/*app.use((req: Request, res: Response) => {
+    res.sendFile(join(__dirname, "dist-client", "index.html"));
+});*/
 
 httpServer.listen(port, () =>
     console.log(`🚀 Server running at: http://localhost:${port}`)
