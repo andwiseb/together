@@ -1,5 +1,6 @@
 import { prisma } from '../../db-connection';
 import { Request, Response } from 'express';
+import { Room } from '@prisma/client';
 
 export const getRoomsInfo = async (req: Request, res: Response) => {
     try {
@@ -53,6 +54,6 @@ export const updateRoomInfoHandler = async (req: Request, res: Response) => {
     }
 }
 
-export const updateRoomInfo = async (id: string, data: Partial<{ isOpened: boolean, currTime: number }>) => {
+export const updateRoomInfo = async (id: string, data: Partial<Room>) => {
     return await prisma.roomInfo.update({ where: { roomId: id }, data });
 }

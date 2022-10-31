@@ -2,24 +2,32 @@ import { Server } from "socket.io";
 import { updateRoomInfo } from './api/controllers/roomInfoController';
 import { getUserById } from './api/controllers/userController';
 import { getRoomById, updateRoom } from './api/controllers/roomController';
-import { Room } from '@prisma/client';
+import { Room, RoomInfo } from '@prisma/client';
 
 let io: Server;
+// setTimeout handler for updating room-info function call
 let updateRoomInfoTimeout: any = 0;
+// Timeout that used in setTimeout
+const DEBOUNCE_TIMEOUT = 500;
+// Store connected users [user_id, socket_id]
 const usersList = new Map<string, string>();
 
-const DEBOUNCE_TIMEOUT = 500;
-
-const updateRoomInfoFunc = (room, data) => {
+// Call a debounced updateRoomInfo function
+const updateRoomInfoFunc = (room: string, data: Partial<RoomInfo>) => {
     updateRoomInfoTimeout = setTimeout(
-        async () => {
-            await updateRoomInfo(room, data)
-            clearTimeout(updateRoomInfoTimeout);
-            updateRoomInfoTimeout = 0;
+        () => {
+            updateRoomInfo(room, data)
+                .catch((err) => console.log('Failed to update room info', err))
+                .finally(() => {
+                    clearTimeout(updateRoomInfoTimeout);
+                    updateRoomInfoTimeout = 0;
+                });
         }
         , DEBOUNCE_TIMEOUT);
 }
 
+// Check if the passed user is the admin of the passed room,
+// if so, assign the administration to the first user from the passed allUsers array
 const checkRoomAdmin = async (roomId: string, userId: string, allUsers: string[]): Promise<string | null> => {
     console.log('User:', userId, 'leave-room:', roomId,);
     // Get room by id
@@ -34,13 +42,14 @@ const checkRoomAdmin = async (roomId: string, userId: string, allUsers: string[]
         return Promise.resolve(null);
     }
 
-    // Check if the leaved socket is the admin of the room
+    // Check if the leaved user is the admin of the room
     if (room.adminId === userId) {
         try {
-            // Make the first socket as the admin of the room
+            // Make the first user as the admin of the room
             await updateRoom(roomId, { adminId: allUsers[0] });
         } catch (err) {
             console.error(`Failed to assign Room admin to user ${userId}. Reason:`, err);
+            return Promise.resolve(null);
         }
 
         return Promise.resolve(allUsers[0]);
@@ -48,6 +57,7 @@ const checkRoomAdmin = async (roomId: string, userId: string, allUsers: string[]
     return Promise.resolve(null);
 }
 
+// Init the socket-io server
 export const initSocket = (appServer) => {
     io = new Server(appServer, { cors: { origin: process.env.SOCKET_ORIGINS?.split(';') } });
 
@@ -56,7 +66,11 @@ export const initSocket = (appServer) => {
         if (socket.handshake.auth?.userId) {
             getUserById(socket.handshake.auth?.userId)
                 .then(() => next())
-                .catch((err) => next(new Error(err?.message)));
+                .catch((err) => {
+                    // Disconnect the user because his connection will still be established
+                    socket.disconnect(true);
+                    next(new Error(err?.message));
+                });
         } else {
             next(new Error('Invalid credentials'));
         }
@@ -69,13 +83,14 @@ export const initSocket = (appServer) => {
         socket.data['username'] = socket.handshake.query.username;
         usersList.set(userId as string, socket.id);
 
-
         socket.on('join-room', async (room: string, cb?: Function) => {
             await socket.join(room);
-            usersList.set(socket.data.userId, socket.id)
+            usersList.set(socket.data.userId, socket.id);
+            // After join the room, send a notification to all users containing the full users list
             const allUsers = (await io.in(room).fetchSockets())?.map(u => u.data.userId);
             io.to(room).emit('room-users-list', allUsers);
-            if (cb) {
+            // Invoke the passed call-back
+            if (cb && typeof cb === 'function') {
                 cb();
             }
         });
@@ -104,7 +119,7 @@ export const initSocket = (appServer) => {
 
         socket.on('toggle-player-state', (state: boolean, room: string, time) => {
             socket.to(room).emit('toggle-player-state', state, state ? time : null);
-            // Update room info with current time
+            // Update room info with current time and playing state
             if (!state && !updateRoomInfoTimeout && time) {
                 updateRoomInfoFunc(room, { currTime: time, isPlaying: false });
             } else if (state && !updateRoomInfoTimeout && time) {

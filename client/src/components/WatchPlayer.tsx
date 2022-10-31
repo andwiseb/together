@@ -6,8 +6,8 @@ import { RoomModel } from '../types';
 import { useRoom } from '../contexts/RoomContext';
 
 const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => {
-    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
-    const [playing, setPlaying] = useState<boolean>(initPlayingState);
+    // const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(true);
     const [volume,] = useState<number | undefined>(undefined);
     const {
         togglePlayPause,
@@ -23,7 +23,7 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
+    const playedByCode = useRef<boolean | undefined>(undefined);
     const mediaUrlChanged = useRef(false);
 
     useEffect(() => {
@@ -93,14 +93,14 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         console.log('Player onReady');
         // Set player ref
         setPlayerRef(reactPlayer);
-        if (!playing) {
-            setPlayerDefaults();
-        }
+        // if (!playing) {
+        setPlayerDefaults();
+        // }
     }
 
     const onPlayerStart = () => {
         console.log('Player onStart');
-        setPlayerDefaults();
+        // setPlayerDefaults();
 
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
