@@ -11,7 +11,7 @@ import RequireAuth from './components/RequireAuth';
 function App() {
     return (
         <Router>
-            <Container style={{ marginTop: '1rem' }}>
+            <Container fluid='lg' style={{ marginTop: '1rem' }}>
                 <Row className="align-items-center">
                     <Col>
                         <Routes>

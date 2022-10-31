@@ -18,6 +18,7 @@ interface SocketContextProps {
     playbackRate: number;
     closeRoom: (roomId: string) => void;
     changeMediaUrl: (roomId: string, mediaUrl: string) => void;
+    sendMessage: (roomId: string, text: string, username: string | null, time?: string, cb?: () => void) => void;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -30,7 +31,7 @@ export const SocketProvider = ({ children }) => {
     const { user } = useAuth()!;
     if (!socket || socket.disconnected) {
         socket = io(import.meta.env.VITE_SOCKET_URL, {
-            query: { userId: user.id },
+            query: { userId: user.id, username: user.username },
             auth: { userId: user.id },
             transports: ['websocket', 'polling']
         });
@@ -112,6 +113,13 @@ export const SocketProvider = ({ children }) => {
         socket.emit('change-media-url', roomId, mediaUrl);
     }
 
+    const sendMessage = (roomId: string, text: string, username: string | null, time?: string, cb?: () => void) => {
+        if (!time) {
+            time = new Date().toISOString();
+        }
+        socket.emit('send-message', roomId, text, username, time, cb);
+    }
+
     return (
         <SocketContext.Provider
             value={{
@@ -127,7 +135,8 @@ export const SocketProvider = ({ children }) => {
                 playbackRate,
                 socket,
                 closeRoom,
-                changeMediaUrl
+                changeMediaUrl,
+                sendMessage
             }}
         >
             {children}

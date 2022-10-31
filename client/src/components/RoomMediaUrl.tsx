@@ -61,7 +61,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     return (
         <Form noValidate>
             <Form.Group>
-                <div className='d-flex gap-2 align-items-baseline'>
+                <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-baseline'>
                     <InputGroup>
                         <InputGroup.Text>Media Url:</InputGroup.Text>
                         <Form.Control

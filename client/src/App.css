@@ -11,3 +11,29 @@
     top: 0;
     left: 0;
 }
+
+.chat-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    overflow-wrap: anywhere;
+}
+
+.chat-list {
+    position: absolute;
+}
+
+.chat-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.chat-item-text {
+    white-space: pre-wrap;
+    font-size: 14px;
+}
+
+.chat-item-timestamp {
+    font-size: 12px;
+}

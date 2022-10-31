@@ -12,6 +12,7 @@ import RoomMediaUrl from './RoomMediaUrl';
 import { RoomService } from '../services/room-service';
 import { useAuth } from '../contexts/AuthContext';
 import { handleHttpError } from '../services/http-client';
+import ChatSection from './ChatSection';
 
 const RoomNotFound = () => {
     return <h1>Room not found! :(</h1>;
@@ -24,7 +25,7 @@ const ErrorDisplay = ({ error }) => {
 const RoomView = () => {
     const [params] = useSearchParams();
     const { link } = useParams();
-    const { isConnected, joinRoom, socket } = useSocket()!;
+    const { isConnected, joinRoom, socket, sendMessage } = useSocket()!;
     const [room, setRoom] = useState<RoomModel | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<any>(null);
@@ -57,7 +58,10 @@ const RoomView = () => {
                 if (room.roomInfo && !room.roomInfo.isOpened) {
                     setRoomClosed(true);
                 } else {
-                    joinRoom(room.id, () => console.log('Joined room:', room.link));
+                    joinRoom(room.id, () => {
+                        console.log('Joined room:', room.link);
+                        sendMessage(room.id, `${user.username} joined the room.`, null);
+                    });
                 }
                 setRoom(room);
 
@@ -113,6 +117,9 @@ const RoomView = () => {
                     <Row>
                         <Col className='player-wrapper'>
                             <WatchPlayer room={room} isPeer={isPeer.current} />
+                        </Col>
+                        <Col lg="auto" md="12" className='px-0 ps-lg-2 py-lg-3'>
+                            <ChatSection room={room} />
                         </Col>
                     </Row>
                     <Row>

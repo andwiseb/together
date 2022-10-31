@@ -66,6 +66,7 @@ export const initSocket = (appServer) => {
         const userId = socket.handshake.query.userId;
         console.log('Socket connection:', socket.id, '| user id:', userId);
         socket.data['userId'] = userId;
+        socket.data['username'] = socket.handshake.query.username;
         usersList.set(userId as string, socket.id);
 
 
@@ -90,6 +91,8 @@ export const initSocket = (appServer) => {
                         socket.to(room).emit('new-admin', newAdmin);
                     }
                     socket.to(room).emit('room-users-list', allUsers);
+                    socket.to(room).emit('message-received', `${socket.data.username} leaved the room.`,
+                        null, new Date().toISOString());
                 }
             }
         });
@@ -132,6 +135,13 @@ export const initSocket = (appServer) => {
 
         socket.on('change-media-url', (room: string, mediaUrl: string) => {
             io.to(room).emit('media-url-changed', mediaUrl);
+        });
+
+        socket.on('send-message', (room: string, text: string, username: string | null, time, cb?: () => void) => {
+            (username ? socket : io).to(room).emit('message-received', text, username, time);
+            if (cb && typeof cb === 'function') {
+                cb();
+            }
         });
     });
 }
