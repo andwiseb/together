@@ -1,9 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
 import { OnProgressProps } from 'react-player/base';
 import { useSocket } from '../contexts/SocketContext';
 import { RoomModel } from '../types';
 import { useRoom } from '../contexts/RoomContext';
+
+const MATCH_YOUTUBE = /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\/|watch\?v=|watch\?.+&v=|shorts\/))((\w|-){11})|youtube\.com\/playlist\?list=|youtube\.com\/user\//
+const MATCH_TWITCH_VIDEO = /(?:www\.|go\.)?twitch\.tv\/videos\/(\d+)($|\?)/
+const MATCH_DAILYMOTION = /^(?:(?:https?):)?(?:\/\/)?(?:www\.)?(?:(?:dailymotion\.com(?:\/embed)?\/video)|dai\.ly)\/([a-zA-Z0-9]+)(?:_[\w_-]+)?$/
+const MATCH_VIMEO = /vimeo\.com\/(?!progressive_redirect).+/
+const MATCH_FACEBOOK = /^https?:\/\/(www\.)?facebook\.com.*\/(video(s)?|watch|story)(\.php?|\/).+$/
 
 const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => {
     // const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
@@ -25,6 +31,13 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(undefined);
     const mediaUrlChanged = useRef(false);
+
+    const isYoutube = useMemo(() => MATCH_YOUTUBE.test(room.mediaUrl), [room.mediaUrl]);
+    const isTwitch = useMemo(() => MATCH_TWITCH_VIDEO.test(room.mediaUrl), [room.mediaUrl]);
+    const isVimeo = useMemo(() => MATCH_VIMEO.test(room.mediaUrl), [room.mediaUrl]);
+    const isDailyMotion = useMemo(() => MATCH_DAILYMOTION.test(room.mediaUrl), [room.mediaUrl]);
+    const isFacebook = useMemo(() => MATCH_FACEBOOK.test(room.mediaUrl), [room.mediaUrl]);
+    // console.log('PLATFORM', { isYoutube, isTwitch, isFacebook, isVimeo, isDailyMotion });
 
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
@@ -51,6 +64,9 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         if (queriedTime !== undefined && player.current) {
             // console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
+            if (isTwitch || isFacebook) {
+                pauseByCode.current = true;
+            }
             player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
@@ -84,6 +100,10 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         // Set default player props using stored room info
         if (room && room.roomInfo && player.current) {
             // console.log('SETTING DEF ROOM INFO', room.roomInfo);
+            playedByCode.current = true;
+            if (isTwitch) {
+                pauseByCode.current = true;
+            }
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -94,13 +114,17 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         // Set player ref
         setPlayerRef(reactPlayer);
         // if (!playing) {
-        setPlayerDefaults();
+        if (isYoutube || isFacebook) {
+            setPlayerDefaults();
+        }
         // }
     }
 
     const onPlayerStart = () => {
         console.log('Player onStart');
-        // setPlayerDefaults();
+        if (isTwitch) {
+            setPlayerDefaults();
+        }
 
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
@@ -118,7 +142,8 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
         setPlaying(true);
 
         if (playedByCode.current === false) {
-            togglePlayPause(true, room.id, player.current!.getCurrentTime());
+            setTimeout(() => togglePlayPause(true, room.id, player.current!.getCurrentTime()),
+                500);
         } else {
             playedByCode.current = false;
         }
@@ -168,6 +193,8 @@ const WatchPlayer = ({ room, isPeer }: { room: RoomModel, isPeer: boolean }) => 
                          onPause={onPlayerPause}
                          onSeek={onPlayerSeek}
                          onError={onPlayerError}
+                         onBuffer={() => console.log('Player onBufferStart')}
+                         onBufferEnd={() => console.log('Player onBufferEnd')}
                          onPlaybackRateChange={onPlayerPlaybackRateChange}
                          config={{
                              facebook: {

@@ -1,4 +1,5 @@
 # Watch-Together Clone
+Watch videos together from various video platforms.
 
 ## Install:
 ### Server:
@@ -30,3 +31,14 @@ VITE_SOCKET_URL=http://localhost:3000
 ```
 
 Now you can run the front-end: `npm run devClient`.
+
+## Build:
+### Server:
+Execute the build command: `npm run build` in the server directory.
+
+This command should generate a `dist` folder contains the JS files of the backend.
+
+### Client:
+Execute the build command: `npm run build` in the client directory.
+
+This command should generate a `dist` folder contains the js bundle of the client.
