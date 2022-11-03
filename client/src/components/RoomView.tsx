@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -29,7 +29,6 @@ const RoomView = () => {
     const [room, setRoom] = useState<RoomModel | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<any>(null);
-    const isPeer = useRef<boolean>(false);
     const [roomClosed, setRoomClosed] = useState<boolean>(false);
     const { user } = useAuth()!;
     const roomService = new RoomService(user.id);
@@ -64,13 +63,12 @@ const RoomView = () => {
                     });
                 }
                 setRoom(room);
-
-                if (room.roomInfo) {
+                /*if (room.roomInfo) {
                     isPeer.current = true;
                 } else {
                     // Create room info record as sign of room opening
                     roomService.createRoomInfo(room.id);
-                }
+                }*/
             })
             .catch((err) => setError(handleHttpError(err)))
             .finally(() => setLoading(false));
@@ -116,7 +114,7 @@ const RoomView = () => {
                 <Container>
                     <Row>
                         <Col className='player-wrapper'>
-                            <WatchPlayer room={room} isPeer={isPeer.current} />
+                            <WatchPlayer room={room} />
                         </Col>
                         <Col lg="auto" md="12" className='px-0 ps-lg-2 py-lg-3'>
                             <ChatSection room={room} />

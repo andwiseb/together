@@ -52,7 +52,14 @@ export const createRoom = async (req: Request, res: Response) => {
         if (!mediaUrl) {
             return res.status(400).json({ message: "medial url is required." })
         }
-        const room = await prisma.room.create({ data: { mediaUrl: mediaUrl, userId: user, adminId: user } });
+        const room = await prisma.room.create({
+            data: {
+                mediaUrl: mediaUrl,
+                userId: user,
+                adminId: user,
+                roomInfo: { create: {} }
+            }
+        });
         res.status(201).json(room);
     } catch (error) {
         res.status(400).json(error);
