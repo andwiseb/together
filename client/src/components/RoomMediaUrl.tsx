@@ -58,8 +58,18 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
         }
     }
 
+    const onSubmit = (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (!urlValidity || url === room.mediaUrl){
+            return;
+        }
+
+        changeMediaUrlHandler();
+    }
+
     return (
-        <Form noValidate>
+        <Form onSubmit={onSubmit} noValidate>
             <Form.Group>
                 <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-baseline'>
                     <InputGroup>

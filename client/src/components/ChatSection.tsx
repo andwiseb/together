@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Card, ListGroup } from 'react-bootstrap';
+import { ButtonGroup, Card, ListGroup } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { RoomModel } from '../types';
+import RoomViewersList from './RoomViewersList';
 
 interface MessageModel {
     user: string;
@@ -17,6 +18,7 @@ const ChatSection = ({ room }: { room: RoomModel }) => {
     const [messages, setMessages] = useState<MessageModel[]>([]);
     const [sending, setSending] = useState<boolean>(false);
     const [msg, setMsg] = useState<string>('');
+    const [viewName, setViewName] = useState<'chat' | 'viewers'>('chat');
     const { socket, isConnected, sendMessage } = useSocket()!;
     const { user } = useAuth()!;
     const chatDiv = useRef<HTMLDivElement>(null);
@@ -86,55 +88,67 @@ const ChatSection = ({ room }: { room: RoomModel }) => {
     }
 
     return (
-        <Card className='h-100 w-100' style={{ width: '300px', minHeight: '300px' }}>
-            <Card.Header>Chat:</Card.Header>
+        <Card className='h-100 w-100' style={{ minWidth: '300px', minHeight: '300px' }}>
+            <Card.Header className='px-2'>
+                <ButtonGroup className='w-100'>
+                    <Button onClick={() => setViewName('chat')}
+                            variant={viewName === 'chat' ? 'dark' : 'outline-dark'}>Chat</Button>
+                    <Button onClick={() => setViewName('viewers')}
+                            variant={viewName === 'viewers' ? 'dark' : 'outline-dark'}>Viewers List</Button>
+                </ButtonGroup>
+            </Card.Header>
             <Card.Body className='p-0'>
-                <div className='h-100 chat-container' ref={chatDiv}>
-                    <ListGroup className='w-100 chat-list' variant="flush">
-                        {messages.map((msg, idx) => (
-                            isFromRoomBot(msg) ?
-                                <ListGroup.Item key={idx} variant='light' className='px-2 py-1'>
-                                    <div className='w-100 chat-item-header'>
-                                        <span className='fst-italic chat-item-text'>{msg.text}</span>
-                                        <span className='chat-item-timestamp'>{formatDate(msg.time)}</span>
-                                    </div>
-                                </ListGroup.Item>
-                                :
-                                <ListGroup.Item key={idx}
-                                                variant={isFromMe(msg) ? undefined : 'secondary'}
-                                                className='px-2 py-1'>
-                                    <div className='w-100 d-flex flex-column'>
-                                        <div className='w-100 chat-item-header'>
-                                            <span className="fw-bold">{msg.user}</span>
-                                            <span className='chat-item-timestamp'>{formatDate(msg.time)}</span>
-                                        </div>
-                                        <span className='chat-item-text'>{msg.text}</span>
-                                    </div>
-                                </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </div>
+                {
+                    viewName === 'chat' ?
+
+                        <div className='h-100 chat-container' ref={chatDiv}>
+                            <ListGroup className='w-100 chat-list' variant="flush">
+                                {messages.map((msg, idx) => (
+                                    isFromRoomBot(msg) ?
+                                        <ListGroup.Item key={idx} variant='light' className='px-2 py-1'>
+                                            <div className='w-100 chat-item-header'>
+                                                <span className='fst-italic chat-item-text'>{msg.text}</span>
+                                                <span className='chat-item-timestamp'>{formatDate(msg.time)}</span>
+                                            </div>
+                                        </ListGroup.Item>
+                                        :
+                                        <ListGroup.Item key={idx}
+                                                        variant={isFromMe(msg) ? undefined : 'secondary'}
+                                                        className='px-2 py-1'>
+                                            <div className='w-100 d-flex flex-column'>
+                                                <div className='w-100 chat-item-header'>
+                                                    <span className="fw-bold">{msg.user}</span>
+                                                    <span className='chat-item-timestamp'>{formatDate(msg.time)}</span>
+                                                </div>
+                                                <span className='chat-item-text'>{msg.text}</span>
+                                            </div>
+                                        </ListGroup.Item>
+                                ))}
+                            </ListGroup>
+                        </div> :
+                        <RoomViewersList room={room} />
+                }
             </Card.Body>
-            <Card.Footer className='px-2'>
-                <Form onSubmit={onFormSubmit}>
-                    <Form.Group>
-                        <InputGroup hasValidation>
-                            <Form.Control
-                                value={msg}
-                                onChange={(e) => setMsg(e.target.value)}
-                                type="text"
-                                placeholder="Type anything to chat"
-                                required
-                                disabled={false}
-                            />
-                            <Button variant="outline-primary" type='submit'
-                                    disabled={sending || !isConnected}>
-                                Send
-                            </Button>
-                        </InputGroup>
-                    </Form.Group>
-                </Form>
-            </Card.Footer>
+            {viewName === 'chat' && <Card.Footer className='px-2'>
+              <Form onSubmit={onFormSubmit}>
+                <Form.Group>
+                  <InputGroup hasValidation>
+                    <Form.Control
+                        value={msg}
+                        onChange={(e) => setMsg(e.target.value)}
+                        type="text"
+                        placeholder="Type anything to chat"
+                        required
+                        disabled={false}
+                    />
+                    <Button variant="outline-primary" type='submit'
+                            disabled={sending || !isConnected}>
+                      Send
+                    </Button>
+                  </InputGroup>
+                </Form.Group>
+              </Form>
+            </Card.Footer>}
         </Card>
     );
 };

@@ -63,12 +63,6 @@ const RoomView = () => {
                     });
                 }
                 setRoom(room);
-                /*if (room.roomInfo) {
-                    isPeer.current = true;
-                } else {
-                    // Create room info record as sign of room opening
-                    roomService.createRoomInfo(room.id);
-                }*/
             })
             .catch((err) => setError(handleHttpError(err)))
             .finally(() => setLoading(false));
@@ -113,6 +107,14 @@ const RoomView = () => {
             {room ?
                 <Container>
                     <Row>
+                        <Col className='p-0'>
+                            <RoomMediaUrl room={room}
+                                          canChangeMedia={true}
+                                          canCloseRoom={isAdmin()} />
+                            <hr />
+                        </Col>
+                    </Row>
+                    <Row>
                         <Col className='player-wrapper'>
                             <WatchPlayer room={room} />
                         </Col>
@@ -120,20 +122,16 @@ const RoomView = () => {
                             <ChatSection room={room} />
                         </Col>
                     </Row>
-                    <Row>
+                    {/*<Row>
                         <Card className='my-2'>
                             <Card.Body>
                                 <Card.Title>Room Info:</Card.Title>
                                 <Card.Text as='div'>
-                                    <RoomMediaUrl room={room}
-                                                  canChangeMedia={true}
-                                                  canCloseRoom={isAdmin()} />
-                                    <hr />
                                     <RoomViewersList room={room} />
                                 </Card.Text>
                             </Card.Body>
                         </Card>
-                    </Row>
+                    </Row>*/}
                 </Container> :
                 <ErrorDisplay error={error} />
             }
