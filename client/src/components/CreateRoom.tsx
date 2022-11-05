@@ -6,6 +6,9 @@ import ReactPlayer from 'react-player'
 import Container from 'react-bootstrap/Container';
 import { useNavigate, createSearchParams } from 'react-router-dom';
 import { RoomService } from '../services/room-service';
+import Row from 'react-bootstrap/Row';
+import PageFooter from './PageFooter';
+import PageHeader from './PageHeader';
 
 const isValidHttpUrl = (input: string) => {
     let url;
@@ -52,43 +55,48 @@ const CreateRoom = () => {
 
     return (
         <>
-            <h4>Hi: {user.username}</h4>
-            <hr />
-            <Form noValidate onSubmit={onFormSubmit}>
-                <Form.Group>
-                    <Form.Label>Enter video url:</Form.Label>
-                    <InputGroup hasValidation>
-                        <InputGroup.Text id="inputGroupPrepend">URL</InputGroup.Text>
-                        <Form.Control
-                            type="text"
-                            placeholder="https://facebook.com/watch?v=123456789"
-                            aria-describedby="inputGroupPrepend"
-                            isInvalid={!urlValidity}
-                            onChange={urlChanged}
-                            required
-                        />
-                        <Form.Control.Feedback type="invalid">
-                            {
-                                !isValidHttpUrl(url) ? 'Please enter a valid url.' :
-                                    !ReactPlayer.canPlay(url) ? 'Video url not supported.' : ''
-                            }
-                        </Form.Control.Feedback>
-                    </InputGroup>
-                </Form.Group>
-            </Form>
-            {urlValidity &&
-                <Container className='player-wrapper'>
-                  <ReactPlayer className='react-player' url={url} width='100%' height='100%'
-                               config={{
-                                   facebook: {
-                                       attributes: {
-                                           'data-height': 540,
-                                       },
-                                   },
-                               }}
-                               onClickPreview={navigateToRoom}
-                               light controls />
-                </Container>}
+            <PageHeader />
+            <Container className='col-xxl-8 px-4'>
+                <Row className='flex-lg-row-reverse align-items-center mb-3'>
+                    <Form noValidate onSubmit={onFormSubmit}>
+                        <Form.Group>
+                            <Form.Label>Enter video url:</Form.Label>
+                            <InputGroup hasValidation>
+                                <InputGroup.Text id="inputGroupPrepend">URL</InputGroup.Text>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="https://facebook.com/watch?v=123456789"
+                                    aria-describedby="inputGroupPrepend"
+                                    isInvalid={!urlValidity}
+                                    onChange={urlChanged}
+                                    required
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {
+                                        !isValidHttpUrl(url) ? 'Please enter a valid url.' :
+                                            !ReactPlayer.canPlay(url) ? 'Video url not supported.' : ''
+                                    }
+                                </Form.Control.Feedback>
+                            </InputGroup>
+                        </Form.Group>
+                    </Form>
+                </Row>
+                <Row className='player-wrapper' style={{ height: '480px' }}>
+                    {urlValidity &&
+                        <ReactPlayer className='react-player' url={url} width='100%' height='480px'
+                                     config={{
+                                         facebook: {
+                                             attributes: {
+                                                 'data-height': 480,
+                                             },
+                                         },
+                                     }}
+                                     onClickPreview={navigateToRoom}
+                                     light controls />
+                    }
+                </Row>
+            </Container>
+            <PageFooter />
         </>
     );
 };

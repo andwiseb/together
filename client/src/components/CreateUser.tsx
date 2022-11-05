@@ -48,10 +48,11 @@ const CreateUser = () => {
     return (
         <Form onSubmit={onFormSubmit}>
             <Form.Group>
-                <Form.Label>Username</Form.Label>
+                {/*<Form.Label>Username</Form.Label>*/}
                 <InputGroup hasValidation style={{ marginBottom: '1rem' }}>
                     <InputGroup.Text>@</InputGroup.Text>
                     <Form.Control
+                        size='lg'
                         type="text"
                         placeholder="Username"
                         required
@@ -65,7 +66,7 @@ const CreateUser = () => {
                 </InputGroup>
             </Form.Group>
             {error && <Alert variant='danger' style={{ marginTop: '1rem' }}>{error}</Alert>}
-            <Button variant="primary" type='submit' disabled={loading}>
+            <Button variant="dark" type='submit' disabled={loading} size='lg' className='w-100'>
                 Join
             </Button>
         </Form>

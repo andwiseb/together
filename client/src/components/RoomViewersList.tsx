@@ -3,6 +3,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { UserService } from '../services/user-service';
 import { useAuth } from '../contexts/AuthContext';
 import { RoomModel, UserModel } from '../types';
+import { ListGroup } from 'react-bootstrap';
 
 const userService = new UserService();
 
@@ -29,16 +30,16 @@ const RoomViewersList = ({ room }: { room: RoomModel }) => {
     return (
         <div className='h-100 position-relative overflow-auto'>
             <h6 className='px-2 pt-2'>Currently Watching ({viewersNameList.length}):</h6>
-            <ol className='position-absolute pb-2'>
+            <ListGroup as="ol" numbered variant="flush" className='position-absolute w-100'>
                 {
                     viewersNameList.map((u, i) =>
-                        <li key={u.id}>
+                        <ListGroup.Item as="li" key={u.id}>
                             <span style={{ textDecoration: i === 0 ? 'underline' : 'inherit' }}>{u.username}</span>
                             &nbsp;{isAdmin(u.id) ? '*' : ''}
-                        </li>
+                        </ListGroup.Item>
                     )
                 }
-            </ol>
+            </ListGroup>
         </div>
     );
 };

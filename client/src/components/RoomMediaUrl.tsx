@@ -1,5 +1,5 @@
-import React, { SyntheticEvent, useEffect, useState } from 'react';
-import { Form, InputGroup } from 'react-bootstrap';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { Dropdown, DropdownButton, Form, InputGroup } from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';
 import { RoomModel } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { RoomService } from '../services/room-service';
 
 interface RoomMediaUrlProps {
-    room: RoomModel;
+    room: RoomModel | null;
     canChangeMedia: boolean;
     canCloseRoom: boolean
 }
@@ -18,16 +18,26 @@ interface RoomMediaUrlProps {
 const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps) => {
     const { closeRoom: socketCloseRoom, changeMediaUrl: socketChangeMediaUrl } = useSocket()!;
     const navigate = useNavigate();
-    const [url, setUrl] = useState<string>(room.mediaUrl);
+    const [url, setUrl] = useState<string>(room?.mediaUrl || '');
     const [urlValidity, setUrlValidity] = useState<boolean>(true);
     const { user } = useAuth()!;
     const roomService = new RoomService(user.id);
 
+    const canSubmit = useCallback((url: string) => {
+        return !!(urlValidity && room && url !== room.mediaUrl)
+    }, [room, urlValidity]);
+
     useEffect(() => {
-        changeMediaUrl(room.mediaUrl);
+        if (room) {
+            changeMediaUrl(room.mediaUrl);
+        }
     }, [room]);
 
     const closeRoomHandler = () => {
+        if (!room) {
+            return;
+        }
+
         roomService.closeRoom(room.id)
             .then(() => {
                 socketCloseRoom(room.id);
@@ -37,6 +47,10 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     }
 
     const changeMediaUrlHandler = () => {
+        if (!room) {
+            return;
+        }
+
         roomService.changeRoomMediaUrl(room.id, url)
             .then(() => socketChangeMediaUrl(room.id, url))
             .catch(err => console.log('Room change media url error', err));
@@ -53,7 +67,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     }
 
     const urlControlBlurred = () => {
-        if (!url || url.trim().length === 0 || !urlValidity) {
+        if ((!url || url.trim().length === 0 || !urlValidity) && room) {
             changeMediaUrl(room.mediaUrl);
         }
     }
@@ -61,7 +75,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     const onSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
 
-        if (!urlValidity || url === room.mediaUrl){
+        if (!canSubmit(url)) {
             return;
         }
 
@@ -71,9 +85,9 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     return (
         <Form onSubmit={onSubmit} noValidate>
             <Form.Group>
-                <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-baseline'>
+                <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-center'>
                     <InputGroup>
-                        <InputGroup.Text>Media Url:</InputGroup.Text>
+                        <InputGroup.Text>Url:</InputGroup.Text>
                         <Form.Control
                             value={url}
                             onChange={urlChanged}
@@ -82,19 +96,22 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
                             onBlur={urlControlBlurred}
                             required
                         />
-                        {canChangeMedia && <Button variant="outline-primary"
+                        {canChangeMedia && <Button variant="outline-dark"
                                                    onClick={changeMediaUrlHandler}
-                                                   disabled={!urlValidity || url === room.mediaUrl}>
+                                                   disabled={!canSubmit(url)}>
                           Change
                         </Button>}
                     </InputGroup>
-                    <RoomShareButton roomLink={room.link} />
+                    <RoomShareButton roomLink={room?.link} />
                     {
                         canCloseRoom &&
-                        <Button variant="danger" onClick={closeRoomHandler} className='flex-shrink-0'>
+                        <Button variant="outline-danger" onClick={closeRoomHandler} className='flex-shrink-0'>
                           Close Room
                         </Button>
                     }
+                    {/*<DropdownButton variant='outline-info' title={user.username}>
+                        <Dropdown.Item>Change username</Dropdown.Item>
+                    </DropdownButton>*/}
                 </div>
             </Form.Group>
         </Form>

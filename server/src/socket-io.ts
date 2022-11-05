@@ -153,7 +153,7 @@ export const initSocket = (appServer) => {
         });
 
         socket.on('send-message', (room: string, text: string, username: string | null, time, cb?: () => void) => {
-            (username ? socket : io).to(room).emit('message-received', text, username, time);
+            io.to(room).emit('message-received', text, username, time);
             if (cb && typeof cb === 'function') {
                 cb();
             }

@@ -2,24 +2,23 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { Card } from 'react-bootstrap';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { RoomModel } from '../types';
 import { useSocket } from '../contexts/SocketContext';
 import WatchPlayer from './WatchPlayer';
-import RoomViewersList from './RoomViewersList';
 import RoomMediaUrl from './RoomMediaUrl';
 import { RoomService } from '../services/room-service';
 import { useAuth } from '../contexts/AuthContext';
 import { handleHttpError } from '../services/http-client';
-import ChatSection from './ChatSection';
-
-const RoomNotFound = () => {
-    return <h1>Room not found! :(</h1>;
-}
+import PageFooter from './PageFooter';
+import VideoSidebar from './VideoSidebar';
 
 const ErrorDisplay = ({ error }) => {
-    return <h1>{typeof error === 'string' ? error : JSON.stringify(error)}</h1>;
+    return (
+        <Row className='text-center text-capitalize'>
+            <h2>{typeof error === 'string' ? error : JSON.stringify(error)}</h2>
+        </Row>
+    );
 }
 
 const RoomView = () => {
@@ -40,7 +39,7 @@ const RoomView = () => {
     }, [user, room]);
 
     if (!id && !link) {
-        return <RoomNotFound />
+        return <Navigate to="/" replace />;
     }
 
     // Fetch Room
@@ -63,6 +62,7 @@ const RoomView = () => {
                     });
                 }
                 setRoom(room);
+                setError(null);
             })
             .catch((err) => setError(handleHttpError(err)))
             .finally(() => setLoading(false));
@@ -94,47 +94,46 @@ const RoomView = () => {
         return <h1>Loading Room ...</h1>;
     }
 
-    if (roomClosed) {
-        return <h1>Sorry! Room is closed :(</h1>;
-    }
-
-    if (!isConnected) {
-        return <h1>You're offline, you can't join/watch this room right now!</h1>
-    }
-
     return (
         <>
-            {room ?
-                <Container>
-                    <Row>
-                        <Col className='p-0'>
-                            <RoomMediaUrl room={room}
-                                          canChangeMedia={true}
-                                          canCloseRoom={isAdmin()} />
-                            <hr />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col className='player-wrapper'>
-                            <WatchPlayer room={room} />
-                        </Col>
-                        <Col lg="auto" md="12" className='px-0 ps-lg-2 py-lg-3'>
-                            <ChatSection room={room} />
-                        </Col>
-                    </Row>
-                    {/*<Row>
-                        <Card className='my-2'>
-                            <Card.Body>
-                                <Card.Title>Room Info:</Card.Title>
-                                <Card.Text as='div'>
-                                    <RoomViewersList room={room} />
-                                </Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Row>*/}
-                </Container> :
-                <ErrorDisplay error={error} />
-            }
+            <Container>
+                <header
+                    className='d-flex gap-1 gap-lg-5 flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
+                    <Link to="/"
+                          className="mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+                        <span className="fs-4">ww2g</span>
+                    </Link>
+                    {!error && !roomClosed && isConnected && <div className='flex-fill'>
+                      <RoomMediaUrl room={room}
+                                    canChangeMedia={true}
+                                    canCloseRoom={isAdmin()} />
+                    </div>}
+                </header>
+            </Container>
+            <Container>
+                {
+                    !isConnected ?
+                        <ErrorDisplay error={`You're offline, you can't join/watch this room right now!`} />
+                        :
+                        room ?
+                            roomClosed ?
+                                <ErrorDisplay error='Sorry! Room is closed :(' />
+                                :
+                                <Row>
+                                    <Col>
+                                        <div className='player-wrapper'>
+                                            <WatchPlayer room={room} />
+                                        </div>
+                                    </Col>
+                                    <Col lg="3" md="12" className='pt-3 py-lg-0 ps-lg-0'>
+                                        <VideoSidebar room={room} />
+                                    </Col>
+                                </Row>
+                            :
+                            <ErrorDisplay error={error} />
+                }
+            </Container>
+            <PageFooter />
         </>
     );
 };

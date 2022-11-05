@@ -1,6 +1,15 @@
+body {
+    font-family: 'Roboto Mono', monospace;
+}
+
+.form-control:focus {
+    border-color: #000000 !important;
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25) !important;
+}
+
 .player-wrapper {
     position: relative;
-    margin: 1rem 0;
+    /*margin: 1rem 0;*/
     /*padding-top: 56.25%; !* Player ratio: 100 / (1280 / 720) *!*/
     border: 1px solid #ccc;
     height: 540px;
@@ -35,5 +44,19 @@
 }
 
 .chat-item-timestamp {
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.chat-bot-text {
     font-size: 12px;
+}
+
+.chat-item-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.chat-from-other {
+    flex-direction: row-reverse;
 }
