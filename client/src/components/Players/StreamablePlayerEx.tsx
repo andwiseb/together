@@ -2,9 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/streamable';
 import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
+import { useRoom } from '../../contexts/RoomContext';
 
 const StreamablePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
+    const [volume, setVolume] = useState<number | undefined>(undefined);
+    const [muted, setMuted] = useState(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
@@ -18,6 +21,7 @@ const StreamablePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         togglePlayPause,
         sendYourTime
     } = useSocket()!;
+    const { isNewRoom, setIsNewRoom } = useRoom()!;
 
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
@@ -65,6 +69,12 @@ const StreamablePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerStart = () => {
         console.log('Player onStart');
+        if (isNewRoom) {
+            setVolume(0.1);
+            setMuted(false);
+            setIsNewRoom(false);
+        }
+
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
             mediaUrlChanged.current = false;
@@ -109,7 +119,7 @@ const StreamablePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
-                     playing={playing} muted={true}
+                     playing={playing} muted={muted} volume={volume}
                      onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}

@@ -1,6 +1,7 @@
 # Watch-Together Clone
 Watch videos together from various video platforms.
 
+File paths, YouTube, Facebook, Twitch, SoundCloud, Streamable, Vimeo, Wistia, Mixcloud, DailyMotion and Kaltura.
 ## Install:
 ### Server:
 ```
@@ -28,6 +29,7 @@ You need to create the environment file `.env.development` in `client` directory
 ```
 VITE_API_URL=http://localhost:3000/api
 VITE_SOCKET_URL=http://localhost:3000
+VITE_DEF_ROOM_VIDEO_URL=https://www.youtube.com/watch?v=BkKDSFYvxKU
 ```
 
 Now you can run the front-end: `npm run devClient`.
@@ -39,6 +41,8 @@ Execute the build command: `npm run build` in the server directory.
 This command should generate a `dist` folder contains the JS files of the backend.
 
 ### Client:
+First, make sure to create the environment file `.env.production` in client directory and put in it the same keys from `.env.development` with production values.
+
 Execute the build command: `npm run build` in the client directory.
 
 This command should generate a `dist` folder contains the js bundle of the client.

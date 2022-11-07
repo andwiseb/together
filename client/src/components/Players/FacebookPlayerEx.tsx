@@ -2,9 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/facebook';
 import { PlayerExProps } from '../WatchPlayer';
 import { useSocket } from '../../contexts/SocketContext';
+import { useRoom } from '../../contexts/RoomContext';
 
 const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
+    const [volume, setVolume] = useState<number | undefined>(undefined);
+    const [muted, setMuted] = useState(true);
     const {
         togglePlayPause,
         queriedTime,
@@ -20,6 +23,7 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(undefined);
     const mediaUrlChanged = useRef(false);
+    const { isNewRoom, setIsNewRoom } = useRoom()!;
 
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
@@ -87,10 +91,6 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         // Set default player props using stored room info
         if (room && room.roomInfo && player.current) {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
-            // playedByCode.current = true;
-            /*if (isTwitch) {
-                pauseByCode.current = true;
-            }*/
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -104,9 +104,11 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerStart = () => {
         console.log('Player onStart');
-        /*if (isTwitch) {
-            setPlayerDefaults();
-        }*/
+        if (isNewRoom) {
+            setVolume(0.1);
+            setMuted(false);
+            setIsNewRoom(false);
+        }
 
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
@@ -157,15 +159,13 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
-                     playing={playing} muted={true}
+                     playing={playing} muted={muted} volume={volume}
                      onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart', player.current!.getCurrentTime())}
-                     onBufferEnd={() => console.log('Player onBufferEnd', player.current!.getCurrentTime())}
                      onPlaybackRateChange={onPlayerPlaybackRateChange}
                      config={{
                          attributes: {

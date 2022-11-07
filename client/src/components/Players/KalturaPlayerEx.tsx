@@ -2,10 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { PlayerExProps } from '../WatchPlayer';
 import ReactPlayer from 'react-player/kaltura';
 import { useSocket } from '../../contexts/SocketContext';
+import { useRoom } from '../../contexts/RoomContext';
 
 // TODO: Not sync anything yet :(
 
 const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
+    const [volume, setVolume] = useState<number | undefined>(undefined);
+    const [muted, setMuted] = useState(true);
     const [playing, setPlaying] = useState<boolean>(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
@@ -22,6 +25,7 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         changePlaybackRate,
         sendYourTime
     } = useSocket()!;
+    const { isNewRoom, setIsNewRoom } = useRoom()!;
 
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
@@ -86,6 +90,13 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
+
+        if (isNewRoom) {
+            setVolume(0.1);
+            setMuted(false);
+            setIsNewRoom(false);
+        }
+
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
             mediaUrlChanged.current = false;
@@ -134,7 +145,7 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
-                     playing={playing} muted={true}
+                     playing={playing} muted={muted} volume={volume}
                      onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}

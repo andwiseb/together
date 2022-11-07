@@ -2,9 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/twitch';
 import { PlayerExProps } from '../WatchPlayer';
 import { useSocket } from '../../contexts/SocketContext';
+import { useRoom } from '../../contexts/RoomContext';
 
 const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
+    const [volume, setVolume] = useState<number | undefined>(undefined);
+    const [muted, setMuted] = useState(true);
     const {
         togglePlayPause,
         queriedTime,
@@ -14,6 +17,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         queryCurrTime,
         socket
     } = useSocket()!;
+    const { isNewRoom, setIsNewRoom } = useRoom()!;
 
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
@@ -98,6 +102,12 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             }
         }, 0);
 
+        if (isNewRoom) {
+            setVolume(0.1);
+            setMuted(false);
+            setIsNewRoom(false);
+        }
+
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
             mediaUrlChanged.current = false;
@@ -158,7 +168,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
-                     playing={playing} muted={true}
+                     playing={playing} muted={muted} volume={volume}
                      onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}
