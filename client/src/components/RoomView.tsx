@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -12,6 +12,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { handleHttpError } from '../services/http-client';
 import PageFooter from './PageFooter';
 import VideoSidebar from './VideoSidebar';
+import { Modal } from 'react-bootstrap';
+import CreateUser from './CreateUser';
 
 const ErrorDisplay = ({ error }) => {
     return (
@@ -29,12 +31,13 @@ const RoomView = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<any>(null);
     const [roomClosed, setRoomClosed] = useState<boolean>(false);
+    const [showCreateUser, setShowCreateUser] = useState<boolean>(false);
     const { user } = useAuth()!;
-    const roomService = new RoomService(user.id);
+    let roomService: RoomService;
 
     const id = params.get('id');
 
-    const isAdmin = useCallback((): boolean => {
+    const isAdmin = useMemo<boolean>((): boolean => {
         return room?.adminId === user.id;
     }, [user, room]);
 
@@ -42,12 +45,19 @@ const RoomView = () => {
         return <Navigate to="/" replace />;
     }
 
+    useEffect(() => {
+        if (!user) {
+            setShowCreateUser(true);
+        }
+    }, [user])
+
     // Fetch Room
     useEffect(() => {
-        if (!id && !link) {
+        if (!id && !link || !user) {
             return;
         }
 
+        roomService = new RoomService(user.id);
         setLoading(true);
 
         (id ? roomService.getRoomById(id) : roomService.getRoomByLink(link as string))
@@ -90,6 +100,23 @@ const RoomView = () => {
         }
     }, [socket]);
 
+    if (showCreateUser) {
+        return (<Modal show={showCreateUser}
+                       onHide={() => setShowCreateUser(false)}
+                       dialogClassName="modal-50w" backdrop="static" centered>
+                <Modal.Header>
+                    <Modal.Title>
+                        Create User:
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <CreateUser successCallback={() => setShowCreateUser(false)} />
+                </Modal.Body>
+                <PageFooter />
+            </Modal>
+        )
+    }
+
     if (loading) {
         return <h1>Loading Room ...</h1>;
     }
@@ -106,7 +133,7 @@ const RoomView = () => {
                     {!error && !roomClosed && isConnected && <div className='flex-fill'>
                       <RoomMediaUrl room={room}
                                     canChangeMedia={true}
-                                    canCloseRoom={isAdmin()} />
+                                    canCloseRoom={isAdmin} />
                     </div>}
                 </header>
             </Container>
