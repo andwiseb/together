@@ -50,3 +50,13 @@ export const deleteUser = async (req: Request, res: Response) => {
         res.status(400).json(error);
     }
 }
+
+export const updateUser = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const user = await prisma.user.update({ where: { id }, data: req.body });
+        res.json(user);
+    } catch (error) {
+        res.status(400).json(error);
+    }
+}

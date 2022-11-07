@@ -18,4 +18,9 @@ export class UserService {
         return await this.client.get(`/${id}`)
             .then((res) => res.data);
     }
+
+    updateUsername = async (userId: string, name: string): Promise<UserModel> => {
+        return await this.client.patch(`/${userId}`, { username: name })
+            .then((res) => res.data);
+    }
 }

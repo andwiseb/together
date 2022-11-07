@@ -2,11 +2,14 @@ import React, { SyntheticEvent, useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
 import { UserService } from '../services/user-service';
 import { Alert } from 'react-bootstrap';
 import { handleHttpError } from '../services/http-client';
+
+interface CreateUsernameProps {
+    successCallback?: () => void;
+}
 
 const generateRandUsername = (): string => {
     const prefix = 'user-';
@@ -16,31 +19,38 @@ const generateRandUsername = (): string => {
 
 const userService = new UserService();
 
-const CreateUser = () => {
-    const navigate = useNavigate();
+const CreateUser = ({ successCallback }: CreateUsernameProps) => {
     const { user, setUser } = useAuth()!;
-    const [value, setValue] = useState<string>(generateRandUsername);
+    const [value, setValue] = useState<string>(user?.username || generateRandUsername());
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
-    const { state } = useLocation();
-
-    useEffect(() => {
-        if (user) {
-            navigate(state?.path || '/create-room');
-        }
-    }, [user]);
 
     const onFormSubmit = (e: SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
-        userService.createUser(value)
+        (user ? userService.updateUsername(user.id, value) : userService.createUser(value))
             .then((user) => {
                 setUser(user);
+                if (successCallback && typeof successCallback === 'function') {
+                    successCallback();
+                }
                 // navigate('/create-room');
             })
             .catch((err) => {
                 console.error('error', err);
-                setError(handleHttpError(err)?.message || 'Failed to create the user.')
+                const globalErrMsg = user ? 'Failed to create the user.' : 'Failed to update the username.';
+                const errData = handleHttpError(err);
+                if (errData && 'code' in errData) {
+                    if (errData.code === 'P2002') {
+                        setError('Username is already exists.');
+                    } else if (errData.code === 'P2025') {
+                        setError('User is not exists!');
+                    } else {
+                        setError(errData.meta?.cause);
+                    }
+                } else {
+                    setError(handleHttpError(err)?.message || globalErrMsg);
+                }
             })
             .finally(() => setLoading(false))
     }
@@ -48,7 +58,6 @@ const CreateUser = () => {
     return (
         <Form onSubmit={onFormSubmit}>
             <Form.Group>
-                {/*<Form.Label>Username</Form.Label>*/}
                 <InputGroup hasValidation style={{ marginBottom: '1rem' }}>
                     <InputGroup.Text>@</InputGroup.Text>
                     <Form.Control
@@ -67,7 +76,7 @@ const CreateUser = () => {
             </Form.Group>
             {error && <Alert variant='danger' style={{ marginTop: '1rem' }}>{error}</Alert>}
             <Button variant="dark" type='submit' disabled={loading} size='lg' className='w-100'>
-                Join
+                {user ? 'Change' : 'Join'}
             </Button>
         </Form>
     );

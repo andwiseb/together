@@ -50,7 +50,7 @@ export const createRoom = async (req: Request, res: Response) => {
             return res.status(403).json({ message: "Not authorized to execute this process." })
         }
         if (!mediaUrl) {
-            return res.status(400).json({ message: "medial url is required." })
+            return res.status(400).json({ message: "media url is required." })
         }
         const room = await prisma.room.create({
             data: {

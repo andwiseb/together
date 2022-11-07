@@ -1,5 +1,5 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
-import { Dropdown, DropdownButton, Form, InputGroup } from 'react-bootstrap';
+import { Dropdown, DropdownButton, Form, InputGroup, Modal } from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';
 import { RoomModel } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import ReactPlayer from 'react-player';
 import RoomShareButton from './RoomShareButton';
 import { useAuth } from '../contexts/AuthContext';
 import { RoomService } from '../services/room-service';
+import CreateUser from './CreateUser';
 
 interface RoomMediaUrlProps {
     room: RoomModel | null;
@@ -20,6 +21,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
     const navigate = useNavigate();
     const [url, setUrl] = useState<string>(room?.mediaUrl || '');
     const [urlValidity, setUrlValidity] = useState<boolean>(true);
+    const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
     const { user } = useAuth()!;
     const roomService = new RoomService(user.id);
 
@@ -82,39 +84,58 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
         changeMediaUrlHandler();
     }
 
+    const changeUsernameHandler = () => {
+        setShowChangeUsername(true);
+    }
+
     return (
-        <Form onSubmit={onSubmit} noValidate>
-            <Form.Group>
-                <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-center'>
-                    <InputGroup>
-                        <InputGroup.Text>Url:</InputGroup.Text>
-                        <Form.Control
-                            value={url}
-                            onChange={urlChanged}
-                            isInvalid={!urlValidity}
-                            readOnly={!canChangeMedia}
-                            onBlur={urlControlBlurred}
-                            required
-                        />
-                        {canChangeMedia && <Button variant="outline-dark"
-                                                   onClick={changeMediaUrlHandler}
-                                                   disabled={!canSubmit(url)}>
-                          Change
-                        </Button>}
-                    </InputGroup>
-                    <RoomShareButton roomLink={room?.link} />
-                    {
-                        canCloseRoom &&
-                        <Button variant="outline-danger" onClick={closeRoomHandler} className='flex-shrink-0'>
-                          Close Room
-                        </Button>
-                    }
-                    {/*<DropdownButton variant='outline-info' title={user.username}>
-                        <Dropdown.Item>Change username</Dropdown.Item>
-                    </DropdownButton>*/}
-                </div>
-            </Form.Group>
-        </Form>
+        <>
+            <Form onSubmit={onSubmit} noValidate>
+                <Form.Group>
+                    <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-center'>
+                        <InputGroup>
+                            <InputGroup.Text>Url:</InputGroup.Text>
+                            <Form.Control
+                                value={url}
+                                onChange={urlChanged}
+                                isInvalid={!urlValidity}
+                                readOnly={!canChangeMedia}
+                                onBlur={urlControlBlurred}
+                                required
+                            />
+                            {canChangeMedia && <Button variant="outline-dark"
+                                                       onClick={changeMediaUrlHandler}
+                                                       disabled={!canSubmit(url)}>
+                              Change
+                            </Button>}
+                        </InputGroup>
+                        <RoomShareButton roomLink={room?.link} />
+                        {
+                            canCloseRoom &&
+                            <Button variant="outline-danger" onClick={closeRoomHandler} className='flex-shrink-0'>
+                              Close Room
+                            </Button>
+                        }
+                        <DropdownButton variant='outline-info' title={user?.username || 'guest'}>
+                            <Dropdown.Item onClick={changeUsernameHandler}>Change username</Dropdown.Item>
+                        </DropdownButton>
+                    </div>
+                </Form.Group>
+            </Form>
+
+            <Modal show={showChangeUsername}
+                   onHide={() => setShowChangeUsername(false)}
+                   size='lg' centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        Change Username:
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <CreateUser successCallback={() => setShowChangeUsername(false)} />
+                </Modal.Body>
+            </Modal>
+        </>
     );
 };
 

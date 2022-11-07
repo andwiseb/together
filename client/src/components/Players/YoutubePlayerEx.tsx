@@ -2,15 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/youtube';
 import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
+import { useRoom } from '../../contexts/RoomContext';
 
 const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
+    const [volume, setVolume] = useState<number | undefined>(undefined);
+    const [muted, setMuted] = useState(true);
 
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(undefined);
     const mediaUrlChanged = useRef(false);
+    const { isNewRoom } = useRoom()!;
 
     const {
         socket,
@@ -85,6 +89,10 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerStart = () => {
         console.log('Player onStart');
+        if (isNewRoom) {
+            setVolume(0.1);
+            setMuted(false);
+        }
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
             mediaUrlChanged.current = false;
@@ -133,7 +141,7 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
-                     playing={playing} muted={true}
+                     playing={playing} muted={muted} volume={volume}
                      onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}
