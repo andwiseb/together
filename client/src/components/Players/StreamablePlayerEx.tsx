@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ReactPlayer from 'react-player/youtube';
+import ReactPlayer from 'react-player/streamable';
 import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
 
-const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
+const StreamablePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
@@ -16,8 +16,6 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         queriedTime,
         queryCurrTime,
         togglePlayPause,
-        playbackRate,
-        changePlaybackRate,
         sendYourTime
     } = useSocket()!;
 
@@ -56,29 +54,12 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         }
     }, [sendYourTime]);
 
-    useEffect(() => {
-        changePlayBackRate(playbackRate);
-    }, [playbackRate, player.current]);
-
-    const changePlayBackRate = (rate: number) => {
-        if (player.current) {
-            const intPlayer = player.current.getInternalPlayer();
-            if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer && typeof intPlayer.setPlaybackRate === 'function') {
-                    // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(rate);
-                }
-            }
-        }
-    }
-
     const onPlayerReady = () => {
         console.log('Player onReady');
         if (room && room.roomInfo && player.current) {
             // console.log('SETTING DEF ROOM INFO', room.roomInfo);
             playedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
-            changePlayBackRate(room.roomInfo.currSpeed);
         }
     }
 
@@ -125,10 +106,6 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         console.log('Player onError', error, data);
     }
 
-    const onPlayerPlaybackRateChange = (rate: number) => {
-        changePlaybackRate(room.id, rate);
-    }
-
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
@@ -139,11 +116,8 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart')}
-                     onBufferEnd={() => console.log('Player onBufferEnd')}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );
 };
 
-export default YoutubePlayerEx;
+export default StreamablePlayerEx;

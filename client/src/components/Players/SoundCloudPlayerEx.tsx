@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ReactPlayer from 'react-player/youtube';
+import ReactPlayer from 'react-player/soundcloud';
 import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
 
-const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
+const SoundCloudPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
@@ -16,8 +16,6 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         queriedTime,
         queryCurrTime,
         togglePlayPause,
-        playbackRate,
-        changePlaybackRate,
         sendYourTime
     } = useSocket()!;
 
@@ -44,7 +42,7 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
-            // console.log('I QUERIED TIME AND IT IS', queriedTime);
+            console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
         }
@@ -56,29 +54,12 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         }
     }, [sendYourTime]);
 
-    useEffect(() => {
-        changePlayBackRate(playbackRate);
-    }, [playbackRate, player.current]);
-
-    const changePlayBackRate = (rate: number) => {
-        if (player.current) {
-            const intPlayer = player.current.getInternalPlayer();
-            if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer && typeof intPlayer.setPlaybackRate === 'function') {
-                    // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(rate);
-                }
-            }
-        }
-    }
-
     const onPlayerReady = () => {
         console.log('Player onReady');
         if (room && room.roomInfo && player.current) {
-            // console.log('SETTING DEF ROOM INFO', room.roomInfo);
+            console.log('SETTING DEF ROOM INFO', room.roomInfo);
             playedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
-            changePlayBackRate(room.roomInfo.currSpeed);
         }
     }
 
@@ -96,7 +77,7 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     const onPlayerPlay = () => {
-        console.log('Player onPlay');
+        console.log('Player onPlay', playedByCode.current);
         setPlaying(true);
 
         if (playedByCode.current === false) {
@@ -125,25 +106,18 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         console.log('Player onError', error, data);
     }
 
-    const onPlayerPlaybackRateChange = (rate: number) => {
-        changePlaybackRate(room.id, rate);
-    }
-
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
-                     playing={playing} muted={true}
+                     playing={playing}
                      onReady={onPlayerReady}
                      onStart={onPlayerStart}
                      onPlay={onPlayerPlay}
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart')}
-                     onBufferEnd={() => console.log('Player onBufferEnd')}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );
 };
 
-export default YoutubePlayerEx;
+export default SoundCloudPlayerEx;

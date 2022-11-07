@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ReactPlayer from 'react-player/youtube';
-import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
+import ReactPlayer from 'react-player/kaltura';
+import { useSocket } from '../../contexts/SocketContext';
 
-const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
+// TODO: Not sync anything yet :(
+
+const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
@@ -44,7 +46,7 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
-            // console.log('I QUERIED TIME AND IT IS', queriedTime);
+            console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
         }
@@ -74,16 +76,16 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerReady = () => {
         console.log('Player onReady');
-        if (room && room.roomInfo && player.current) {
-            // console.log('SETTING DEF ROOM INFO', room.roomInfo);
-            playedByCode.current = true;
-            player.current.seekTo(room.roomInfo.currTime, 'seconds');
-            changePlayBackRate(room.roomInfo.currSpeed);
-        }
     }
 
     const onPlayerStart = () => {
         console.log('Player onStart');
+        if (room && room.roomInfo && player.current) {
+            console.log('SETTING DEF ROOM INFO', room.roomInfo);
+            playedByCode.current = true;
+            player.current.seekTo(room.roomInfo.currTime, 'seconds');
+            changePlayBackRate(room.roomInfo.currSpeed);
+        }
         // Don't query for current time when media-url changed
         if (mediaUrlChanged.current) {
             mediaUrlChanged.current = false;
@@ -146,4 +148,4 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     );
 };
 
-export default YoutubePlayerEx;
+export default KalturaPlayerEx;

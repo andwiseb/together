@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ReactPlayer from 'react-player/youtube';
+import ReactPlayer from 'react-player/vidyard';
 import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
 
-const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
+// Todo: Sync Bug, not sync seeking sometimes
+
+const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(undefined);
+    const seekedByCode = useRef<boolean>(false);
     const mediaUrlChanged = useRef(false);
 
     const {
@@ -26,6 +29,7 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
             if (time) {
+                seekedByCode.current = true;
                 player.current!.seekTo(time, 'seconds');
             }
             setPlaying(state);
@@ -44,8 +48,9 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
-            // console.log('I QUERIED TIME AND IT IS', queriedTime);
+            console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
+            seekedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
@@ -75,8 +80,9 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const onPlayerReady = () => {
         console.log('Player onReady');
         if (room && room.roomInfo && player.current) {
-            // console.log('SETTING DEF ROOM INFO', room.roomInfo);
+            console.log('SETTING DEF ROOM INFO', room.roomInfo);
             playedByCode.current = true;
+            seekedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -119,6 +125,12 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerSeek = (seconds: number) => {
         console.log('Player onSeek', seconds);
+        if (playing && !seekedByCode.current) {
+            console.log('FIRING ON-PLAY');
+            playedByCode.current = false;
+            onPlayerPlay();
+        }
+        seekedByCode.current = false;
     }
 
     const onPlayerError = (error: any, data?: any) => {
@@ -146,4 +158,4 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     );
 };
 
-export default YoutubePlayerEx;
+export default VidyardPlayerEx;
