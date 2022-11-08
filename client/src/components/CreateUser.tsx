@@ -38,7 +38,7 @@ const CreateUser = ({ successCallback }: CreateUsernameProps) => {
             })
             .catch((err) => {
                 console.error('error', err);
-                const globalErrMsg = user ? 'Failed to create the user.' : 'Failed to update the username.';
+                const globalErrMsg = user ? 'Failed to update the username.' : 'Failed to create the user.';
                 const errData = handleHttpError(err);
                 if (errData && 'code' in errData) {
                     if (errData.code === 'P2002') {
