@@ -158,5 +158,9 @@ export const initSocket = (appServer) => {
                 cb();
             }
         });
+
+        socket.on('seek-video', (room: string, seconds: number) => {
+            socket.to(room).emit('video-seeked', seconds);
+        });
     });
 }

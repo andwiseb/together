@@ -4,8 +4,6 @@ import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
-// Todo: Sync Bug, not sync seeking sometimes
-
 const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
     const [volume, setVolume] = useState<number | undefined>(undefined);
@@ -25,7 +23,9 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         togglePlayPause,
         playbackRate,
         changePlaybackRate,
-        sendYourTime
+        sendYourTime,
+        notifyVideoSeeked,
+        notifySeekVideo
     } = useSocket()!;
 
     useEffect(() => {
@@ -33,7 +33,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
             if (time) {
-                seekedByCode.current = true;
+                // seekedByCode.current = true;
                 player.current!.seekTo(time, 'seconds');
             }
             setPlaying(state);
@@ -54,7 +54,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         if (queriedTime !== undefined && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
-            seekedByCode.current = true;
+            // seekedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
@@ -68,6 +68,13 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     useEffect(() => {
         changePlayBackRate(playbackRate);
     }, [playbackRate, player.current]);
+
+    useEffect(() => {
+        if (notifyVideoSeeked !== undefined && player.current) {
+            // seekedByCode.current = true;
+            player.current.seekTo(notifyVideoSeeked, 'seconds');
+        }
+    }, [notifyVideoSeeked, player.current]);
 
     const changePlayBackRate = (rate: number) => {
         if (player.current) {
@@ -86,7 +93,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         if (room && room.roomInfo && player.current) {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
             playedByCode.current = true;
-            seekedByCode.current = true;
+            // seekedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -111,7 +118,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     const onPlayerPlay = () => {
-        console.log('Player onPlay');
+        console.log('Player onPlay', playedByCode.current);
         setPlaying(true);
 
         if (playedByCode.current === false) {
@@ -122,7 +129,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     const onPlayerPause = () => {
-        console.log('Player onPause');
+        console.log('Player onPause', pauseByCode.current);
         setPlaying(false);
 
         if (!pauseByCode.current) {
@@ -132,14 +139,19 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         }
     }
 
-    const onPlayerSeek = (seconds: number) => {
-        console.log('Player onSeek', seconds);
-        if (playing && !seekedByCode.current) {
+    const onPlayerSeek = (seconds: any) => {
+        console.log('Player onSeek', seconds, 'By CODE', seekedByCode.current);
+        /*if (playing && !seekedByCode.current) {
             console.log('FIRING ON-PLAY');
             playedByCode.current = false;
             onPlayerPlay();
         }
-        seekedByCode.current = false;
+        seekedByCode.current = false;*/
+        if (!seekedByCode.current) {
+            notifySeekVideo(room.id, seconds[1]);
+        } else {
+            seekedByCode.current = false;
+        }
     }
 
     const onPlayerError = (error: any, data?: any) => {

@@ -4,8 +4,6 @@ import ReactPlayer from 'react-player/wistia';
 import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
-//Todo: Sync Bug, after seeking from first, try pause and play from the second
-
 const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [playing, setPlaying] = useState<boolean>(true);
     const [volume, setVolume] = useState<number | undefined>(undefined);
@@ -25,7 +23,9 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         togglePlayPause,
         playbackRate,
         changePlaybackRate,
-        sendYourTime
+        sendYourTime,
+        notifyVideoSeeked,
+        notifySeekVideo
     } = useSocket()!;
 
     useEffect(() => {
@@ -80,6 +80,13 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         }
     }
 
+    useEffect(() => {
+        if (notifyVideoSeeked !== undefined && player.current) {
+            seekedByCode.current = true;
+            player.current.seekTo(notifyVideoSeeked, 'seconds');
+        }
+    }, [notifyVideoSeeked, player.current]);
+
     const onPlayerReady = () => {
         console.log('Player onReady');
     }
@@ -89,7 +96,7 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         setTimeout(() => {
             if (room && room.roomInfo && player.current) {
                 console.log('SETTING DEF ROOM INFO', room.roomInfo);
-                playedByCode.current = true;
+                // playedByCode.current = true;
                 seekedByCode.current = true;
                 player.current.seekTo(room.roomInfo.currTime, 'seconds');
                 changePlayBackRate(room.roomInfo.currSpeed);
@@ -136,13 +143,18 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     const onPlayerSeek = (seconds: number) => {
-        console.log('Player onSeek', seconds);
-        if (playing && !seekedByCode.current) {
+        console.log('Player onSeek', seconds, seekedByCode.current);
+        // TODO: Hold down and seek it's not fire onSeek
+        /*if (playing && !seekedByCode.current) {
             console.log('FIRING ON-PLAY');
             playedByCode.current = false;
             onPlayerPlay();
+        }*/
+        if (!seekedByCode.current) {
+            notifySeekVideo(room.id, seconds);
+        } else {
+            seekedByCode.current = false;
         }
-        seekedByCode.current = false;
     }
 
     const onPlayerError = (error: any, data?: any) => {

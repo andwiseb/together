@@ -4,8 +4,6 @@ import ReactPlayer from 'react-player/kaltura';
 import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
-// TODO: Not sync anything yet :(
-
 const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
@@ -21,8 +19,6 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         queriedTime,
         queryCurrTime,
         togglePlayPause,
-        playbackRate,
-        changePlaybackRate,
         sendYourTime
     } = useSocket()!;
     const { isNewRoom, setIsNewRoom } = useRoom()!;
@@ -62,22 +58,6 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         }
     }, [sendYourTime]);
 
-    useEffect(() => {
-        changePlayBackRate(playbackRate);
-    }, [playbackRate, player.current]);
-
-    const changePlayBackRate = (rate: number) => {
-        if (player.current) {
-            const intPlayer = player.current.getInternalPlayer();
-            if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer && typeof intPlayer.setPlaybackRate === 'function') {
-                    // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(rate);
-                }
-            }
-        }
-    }
-
     const onPlayerReady = () => {
         console.log('Player onReady');
     }
@@ -88,7 +68,6 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
             playedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
-            changePlayBackRate(room.roomInfo.currSpeed);
         }
 
         if (isNewRoom) {
@@ -138,10 +117,6 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         console.log('Player onError', error, data);
     }
 
-    const onPlayerPlaybackRateChange = (rate: number) => {
-        changePlaybackRate(room.id, rate);
-    }
-
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
@@ -152,9 +127,6 @@ const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart')}
-                     onBufferEnd={() => console.log('Player onBufferEnd')}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );
 };

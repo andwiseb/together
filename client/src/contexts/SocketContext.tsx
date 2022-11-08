@@ -19,6 +19,8 @@ interface SocketContextProps {
     closeRoom: (roomId: string) => void;
     changeMediaUrl: (roomId: string, mediaUrl: string) => void;
     sendMessage: (roomId: string, text: string, username: string | null, time?: string, cb?: () => void) => void;
+    notifySeekVideo: (roomId: string, seconds: number) => void;
+    notifyVideoSeeked?: number;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -42,6 +44,7 @@ export const SocketProvider = ({ children }) => {
     const [sendYourTime, setSendYourTime] = useState<(time: number) => void | undefined>();
     const [userList, setUserList] = useState<string[]>([]);
     const [playbackRate, setPlaybackRate] = useState<number>(1);
+    const [notifyVideoSeeked, setNotifyVideoSeeked] = useState<undefined | number>();
 
     useEffect(() => {
         socket.on('connect', () => {
@@ -78,6 +81,10 @@ export const SocketProvider = ({ children }) => {
             setPlaybackRate(rate);
         });
 
+        socket.on('video-seeked', (seconds: number) => {
+            setNotifyVideoSeeked(seconds);
+        });
+
         return () => {
             socket.off('connect');
             socket.off('connect_error');
@@ -86,6 +93,7 @@ export const SocketProvider = ({ children }) => {
             socket.off('others-time-is');
             socket.off('room-users-list');
             socket.off('playback-rate-changed');
+            socket.off('video-seeked');
         };
     }, [user]);
 
@@ -94,6 +102,7 @@ export const SocketProvider = ({ children }) => {
     }
 
     const togglePlayPause = (state: boolean, roomId: string, time: number) => {
+        console.log('I TOGGLED PLAYER STATE TO', state);
         socket.emit('toggle-player-state', state, roomId, time);
     }
 
@@ -120,6 +129,10 @@ export const SocketProvider = ({ children }) => {
         socket.emit('send-message', roomId, text, username, time, cb);
     }
 
+    const notifySeekVideo = (roomId: string, seconds: number) => {
+        socket.emit('seek-video', roomId, seconds);
+    }
+
     return (
         <SocketContext.Provider
             value={{
@@ -136,7 +149,9 @@ export const SocketProvider = ({ children }) => {
                 socket,
                 closeRoom,
                 changeMediaUrl,
-                sendMessage
+                sendMessage,
+                notifySeekVideo,
+                notifyVideoSeeked
             }}
         >
             {children}
