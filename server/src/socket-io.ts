@@ -59,7 +59,7 @@ const checkRoomAdmin = async (roomId: string, userId: string, allUsers: string[]
 
 // Init the socket-io server
 export const initSocket = (appServer) => {
-    io = new Server(appServer, { cors: { origin: process.env.SOCKET_ORIGINS?.split(';') } });
+    io = new Server(appServer, { cors: { origin: process.env.SOCKET_ORIGINS?.split(';') }, path: '/wsapp/' });
 
     // Refuse connection from socket without auth data
     io.use((socket, next) => {

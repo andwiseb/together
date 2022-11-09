@@ -33,6 +33,7 @@ export const SocketProvider = ({ children }) => {
     const { user } = useAuth()!;
     if (!socket || socket.disconnected) {
         socket = io(import.meta.env.VITE_SOCKET_URL, {
+            path: '/wsapp/',
             query: { userId: user.id, username: user.username },
             auth: { userId: user.id },
             transports: ['websocket', 'polling']
