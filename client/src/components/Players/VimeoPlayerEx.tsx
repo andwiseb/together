@@ -5,7 +5,8 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
 const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const {
@@ -15,13 +16,16 @@ const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         changePlaybackRate,
         playbackRate,
         queryCurrTime,
-        socket
+        socket,
+        notifyVideoSeeked,
+        notifySeekVideo
     } = useSocket()!;
 
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
+    const seekedByCode = useRef<boolean>(false);
     const mediaUrlChanged = useRef(false);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
 
@@ -30,15 +34,15 @@ const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
             if (time) {
+                seekedByCode.current = true;
                 player.current!.seekTo(time, 'seconds');
             }
             // Check Possible seek event
-            if (state && playing === state) {
+            /*if (state && playing === state) {
                 // Fire the play event manually to apply the seek
                 onPlayerPlay();
-            } else {
-                setPlaying(state);
-            }
+            } else {*/
+            setPlaying(state);
         });
 
         // Get listener handler of this event because we have 2 listeners for it
@@ -56,9 +60,7 @@ const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         if (queriedTime !== undefined && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
             // playedByCode.current = true;
-            /*if (isTwitch || isFacebook) {
-                pauseByCode.current = true;
-            }*/
+            seekedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
@@ -73,16 +75,20 @@ const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         changePlayBackRate(playbackRate);
     }, [playbackRate, player.current]);
 
+    useEffect(() => {
+        if (notifyVideoSeeked !== undefined && player.current) {
+            seekedByCode.current = true;
+            player.current.seekTo(notifyVideoSeeked, 'seconds');
+        }
+    }, [notifyVideoSeeked, player.current]);
+
     const changePlayBackRate = (rate: number) => {
         if (player.current) {
             const intPlayer = player.current.getInternalPlayer();
             if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer) {
-                    // Youtube, Vimeo
+                // Youtube, Vimeo
+                if ('setPlaybackRate' in intPlayer && typeof 'setPlaybackRate' === 'function') {
                     intPlayer.setPlaybackRate(rate);
-                } else if ('playbackRate' in intPlayer && typeof intPlayer.playbackRate === 'function') {
-                    // Wistia
-                    intPlayer.playbackRate(rate);
                 }
             }
         }
@@ -92,7 +98,10 @@ const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         // Set default player props using stored room info
         if (room && room.roomInfo && player.current) {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
-            playedByCode.current = true;
+            if (playing) {
+                playedByCode.current = true;
+            }
+            seekedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -148,7 +157,14 @@ const VimeoPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     const onPlayerSeek = (seconds: number) => {
-        console.log('Player onSeek', seconds);
+        console.log('Player onSeek', seconds, 'By CODE', seekedByCode.current);
+
+        if (!seekedByCode.current) {
+            playedByCode.current = true;
+            notifySeekVideo(room.id, seconds);
+        } else {
+            seekedByCode.current = false;
+        }
     }
 
     const onPlayerError = (error: any, data?: any) => {

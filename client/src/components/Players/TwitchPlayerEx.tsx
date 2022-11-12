@@ -5,15 +5,15 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
 const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    // TODO: initialPlayingState should be TRUE if it's not a Peer
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const {
         togglePlayPause,
         queriedTime,
         sendYourTime,
-        changePlaybackRate,
-        playbackRate,
         queryCurrTime,
         socket
     } = useSocket()!;
@@ -22,7 +22,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const mediaUrlChanged = useRef(false);
     const seekedSeconds = useRef<undefined | number>(undefined);
 
@@ -30,6 +30,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
+            // TODO: time should be check if it's a time, typeof time === 'number'
             if (time) {
                 player.current!.seekTo(time, 'seconds');
             }
@@ -51,9 +52,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         if (queriedTime !== undefined && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
-            // If isTwitch
             pauseByCode.current = true;
-
             player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
@@ -64,44 +63,25 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         }
     }, [sendYourTime]);
 
-    useEffect(() => {
-        changePlayBackRate(playbackRate);
-    }, [playbackRate, player.current]);
-
-    const changePlayBackRate = (rate: number) => {
-        if (player.current) {
-            const intPlayer = player.current.getInternalPlayer();
-            if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer) {
-                    // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(rate);
-                } else if ('playbackRate' in intPlayer && typeof intPlayer.playbackRate === 'function') {
-                    // Wistia
-                    intPlayer.playbackRate(rate);
-                }
-            }
-        }
-    }
-
     const onPlayerReady = () => {
         console.log('Player onReady');
-    }
 
-    const onPlayerStart = () => {
-        console.log('Player onStart');
         setTimeout(() => {
             // Set default player props using stored room info
             if (room && room.roomInfo && player.current) {
                 console.log('SETTING DEF ROOM INFO', room.roomInfo);
-                playedByCode.current = true;
-                // if isTwitch
-                pauseByCode.current = true;
-
+                if (playing) {
+                    playedByCode.current = true;
+                    pauseByCode.current = true;
+                }
                 player.current.seekTo(room.roomInfo.currTime, 'seconds');
-                changePlayBackRate(room.roomInfo.currSpeed)
+                // changePlayBackRate(room.roomInfo.currSpeed); // Not available by the player
             }
-        }, 0);
+        }, 222);
+    }
 
+    const onPlayerStart = () => {
+        console.log('Player onStart');
         if (isNewRoom) {
             setVolume(0.1);
             setMuted(false);
@@ -113,7 +93,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             mediaUrlChanged.current = false;
         } else {
             // If Peer is joined, emit message to ask other users for current video time to seek to it
-            if (isPeer) {
+            if (isPeer && initPlayingState) {
                 console.log('I SEND REQUEST TO QUERY CURRENT TIME');
                 queryCurrTime(room.id);
             }
@@ -161,10 +141,6 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         console.log('Player onError', error, data);
     }
 
-    const onPlayerPlaybackRateChange = (rate: number) => {
-        changePlaybackRate(room.id, rate);
-    }
-
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
@@ -175,9 +151,6 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart')}
-                     onBufferEnd={() => console.log('Player onBufferEnd')}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );
 };

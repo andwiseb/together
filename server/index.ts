@@ -4,7 +4,7 @@ import morgan from 'morgan';
 import { config } from 'dotenv'
 import { connectDB } from './src/db-connection';
 import { createServer } from "http";
-import { initSocket } from './src/socket-io';
+import { clearAllRoomAutoCloseTimeouts, initSocket } from './src/socket-io';
 import { join } from 'path';
 
 import roomRoutes from './src/api/routes/roomRoutes';
@@ -43,6 +43,15 @@ app.use('/api/rooms-info', roomInfoRoutes);
     res.sendFile(join(__dirname, "dist-client", "index.html"));
 });*/
 
+httpServer.on('close', () => {
+    clearAllRoomAutoCloseTimeouts();
+});
+
+process.on('SIGINT', () => {
+    httpServer.close();
+});
+
 httpServer.listen(port, () =>
     console.log(`🚀 Server running at: http://localhost:${port}`)
 );
+

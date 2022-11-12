@@ -5,13 +5,14 @@ import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
 const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const mediaUrlChanged = useRef(false);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
 
@@ -80,7 +81,9 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         console.log('Player onReady');
         if (room && room.roomInfo && player.current) {
             // console.log('SETTING DEF ROOM INFO', room.roomInfo);
-            playedByCode.current = true;
+            if (playing) {
+                playedByCode.current = true;
+            }
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -99,7 +102,10 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
         } else {
             // If Peer is joined, emit message to ask other users for current video time to seek to it
             if (isPeer) {
-                queryCurrTime(room.id);
+                // Delay the query so the onPlay event fire first
+                setTimeout(() => {
+                    queryCurrTime(room.id);
+                }, 0);
             }
         }
     }
@@ -148,8 +154,6 @@ const YoutubePlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart')}
-                     onBufferEnd={() => console.log('Player onBufferEnd')}
                      onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );

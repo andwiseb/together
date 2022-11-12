@@ -5,7 +5,8 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
 const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const {
@@ -21,7 +22,7 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const mediaUrlChanged = useRef(false);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
 
@@ -32,12 +33,18 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             if (time) {
                 player.current!.seekTo(time, 'seconds');
             }
+            setPlaying(state);
+
             // Check Possible seek event
             if (state && playing === state) {
                 // Fire the play event manually to apply the seek
-                onPlayerPlay();
-            } else {
-                setPlaying(state);
+                setTimeout(() => {
+                    // If playedByCode still true that mean onPlay not fired, so fire it manually
+                    if (playedByCode.current) {
+                        console.log('FIRING ON-PLAY MANUALLY');
+                        onPlayerPlay();
+                    }
+                }, 500);
             }
         });
 
@@ -91,6 +98,9 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         // Set default player props using stored room info
         if (room && room.roomInfo && player.current) {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
+            if (playing) {
+                playedByCode.current = true;
+            }
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);
         }
@@ -126,8 +136,7 @@ const FacebookPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         setPlaying(true);
 
         if (playedByCode.current === false) {
-            setTimeout(() => togglePlayPause(true, room.id, player.current!.getCurrentTime()),
-                333);
+            setTimeout(() => togglePlayPause(true, room.id, player.current!.getCurrentTime()), 500);
         } else {
             playedByCode.current = false;
         }

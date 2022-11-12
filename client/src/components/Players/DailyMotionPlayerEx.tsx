@@ -5,7 +5,8 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
 const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const {
@@ -22,7 +23,7 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const mediaUrlChanged = useRef(false);
 
     useEffect(() => {
@@ -84,7 +85,9 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         // Set default player props using stored room info
         if (room && room.roomInfo && player.current) {
             // console.log('SETTING DEF ROOM INFO', room.roomInfo);
-            playedByCode.current = true;
+            if (playing) {
+                playedByCode.current = true;
+            }
 
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
             changePlayBackRate(room.roomInfo.currSpeed);

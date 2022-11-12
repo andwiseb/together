@@ -5,13 +5,14 @@ import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
 const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const seekedByCode = useRef<boolean>(false);
     const mediaUrlChanged = useRef(false);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
@@ -21,8 +22,6 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         queriedTime,
         queryCurrTime,
         togglePlayPause,
-        playbackRate,
-        changePlaybackRate,
         sendYourTime,
         notifyVideoSeeked,
         notifySeekVideo
@@ -53,7 +52,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
-            playedByCode.current = true;
+            // playedByCode.current = true;
             // seekedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
         }
@@ -66,36 +65,22 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }, [sendYourTime]);
 
     useEffect(() => {
-        changePlayBackRate(playbackRate);
-    }, [playbackRate, player.current]);
-
-    useEffect(() => {
         if (notifyVideoSeeked !== undefined && player.current) {
             // seekedByCode.current = true;
             player.current.seekTo(notifyVideoSeeked, 'seconds');
         }
     }, [notifyVideoSeeked, player.current]);
 
-    const changePlayBackRate = (rate: number) => {
-        if (player.current) {
-            const intPlayer = player.current.getInternalPlayer();
-            if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer && typeof intPlayer.setPlaybackRate === 'function') {
-                    // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(rate);
-                }
-            }
-        }
-    }
-
     const onPlayerReady = () => {
         console.log('Player onReady');
         if (room && room.roomInfo && player.current) {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
-            playedByCode.current = true;
+            if (playing) {
+                playedByCode.current = true;
+            }
             // seekedByCode.current = true;
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
-            changePlayBackRate(room.roomInfo.currSpeed);
+            // changePlayBackRate(room.roomInfo.currSpeed); // Not available by the player
         }
     }
 
@@ -141,12 +126,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerSeek = (seconds: any) => {
         console.log('Player onSeek', seconds, 'By CODE', seekedByCode.current);
-        /*if (playing && !seekedByCode.current) {
-            console.log('FIRING ON-PLAY');
-            playedByCode.current = false;
-            onPlayerPlay();
-        }
-        seekedByCode.current = false;*/
+
         if (!seekedByCode.current) {
             notifySeekVideo(room.id, seconds[1]);
         } else {
@@ -156,10 +136,6 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
 
     const onPlayerError = (error: any, data?: any) => {
         console.log('Player onError', error, data);
-    }
-
-    const onPlayerPlaybackRateChange = (rate: number) => {
-        changePlaybackRate(room.id, rate);
     }
 
     return (
@@ -172,9 +148,6 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onBuffer={() => console.log('Player onBufferStart')}
-                     onBufferEnd={() => console.log('Player onBufferEnd')}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );
 };

@@ -3,15 +3,24 @@ import { updateRoomInfo } from './api/controllers/roomInfoController';
 import { getUserById } from './api/controllers/userController';
 import { getRoomById, updateRoom } from './api/controllers/roomController';
 import { Room, RoomInfo } from '@prisma/client';
+import { clearTimeout } from 'timers';
 
 let io: Server;
 // setTimeout handler for updating room-info function call
 let updateRoomInfoTimeout: any = 0;
 // Timeout that used in setTimeout
-const DEBOUNCE_TIMEOUT = 500;
+const DEBOUNCE_TIMEOUT = 100;
+// Timeout for room auto-close process
+const ROOM_AUTO_CLOSE_TIMEOUT = 120000;
 // Store connected users [user_id, socket_id]
 const usersList = new Map<string, string>();
+const roomAutoCloseTimeouts = new Map<string, NodeJS.Timeout>();
 
+export const clearAllRoomAutoCloseTimeouts = () => {
+    roomAutoCloseTimeouts.forEach((value) => {
+        clearTimeout(value);
+    });
+}
 // Call a debounced updateRoomInfo function
 const updateRoomInfoFunc = (room: string, data: Partial<RoomInfo>) => {
     updateRoomInfoTimeout = setTimeout(
@@ -84,6 +93,10 @@ export const initSocket = (appServer) => {
         usersList.set(userId as string, socket.id);
 
         socket.on('join-room', async (room: string, cb?: Function) => {
+            // If room set to auto-close, stop the process
+            if (roomAutoCloseTimeouts.has(room)) {
+                clearTimeout(roomAutoCloseTimeouts.get(room));
+            }
             await socket.join(room);
             usersList.set(socket.data.userId, socket.id);
             // After join the room, send a notification to all users containing the full users list
@@ -108,6 +121,21 @@ export const initSocket = (appServer) => {
                     socket.to(room).emit('room-users-list', allUsers);
                     socket.to(room).emit('message-received', `${socket.data.username} leaved the room.`,
                         null, new Date().toISOString());
+                } else {
+                    // If room set to auto-close, stop the process
+                    if (roomAutoCloseTimeouts.has(room)) {
+                        clearTimeout(roomAutoCloseTimeouts.get(room));
+                    }
+                    const handler = setTimeout(async () => {
+                            console.log('Room', room, ', set to auto close process.');
+                            try {
+                                await updateRoomInfo(room, { isOpened: false });
+                            } catch (err) {
+                                console.error('Room auto-close process failed', err);
+                            }
+                        },
+                        ROOM_AUTO_CLOSE_TIMEOUT);
+                    roomAutoCloseTimeouts.set(room, handler);
                 }
             }
         });
@@ -120,10 +148,10 @@ export const initSocket = (appServer) => {
         socket.on('toggle-player-state', (state: boolean, room: string, time) => {
             socket.to(room).emit('toggle-player-state', state, state ? time : null);
             // Update room info with current time and playing state
-            if (!state && !updateRoomInfoTimeout && time) {
-                updateRoomInfoFunc(room, { currTime: time, isPlaying: false });
-            } else if (state && !updateRoomInfoTimeout && time) {
-                updateRoomInfoFunc(room, { currTime: time, isPlaying: true });
+            if (!updateRoomInfoTimeout && typeof time === 'number') {
+                updateRoomInfoFunc(room, { currTime: time, isPlaying: state});
+            /*} else if (state && !updateRoomInfoTimeout && time) {
+                updateRoomInfoFunc(room, { currTime: time, isPlaying: true });*/
             }
         });
 

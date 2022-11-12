@@ -5,13 +5,14 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
 const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const [playing, setPlaying] = useState<boolean>(true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const player = useRef<ReactPlayer>(null);
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
-    const playedByCode = useRef<boolean | undefined>(undefined);
+    const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const seekedByCode = useRef<boolean>(false);
     const mediaUrlChanged = useRef(false);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
@@ -53,8 +54,10 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     useEffect(() => {
         if (queriedTime !== undefined && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
-            playedByCode.current = true;
-            seekedByCode.current = true;
+            // playedByCode.current = true;
+            if (initPlayingState) {
+                seekedByCode.current = true;
+            }
             player.current.seekTo(queriedTime, 'seconds');
         }
     }, [queriedTime, player.current]);
@@ -145,11 +148,6 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const onPlayerSeek = (seconds: number) => {
         console.log('Player onSeek', seconds, seekedByCode.current);
         // TODO: Hold down and seek it's not fire onSeek
-        /*if (playing && !seekedByCode.current) {
-            console.log('FIRING ON-PLAY');
-            playedByCode.current = false;
-            onPlayerPlay();
-        }*/
         if (!seekedByCode.current) {
             notifySeekVideo(room.id, seconds);
         } else {

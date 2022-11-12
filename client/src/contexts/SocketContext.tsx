@@ -31,12 +31,13 @@ export const useSocket = (): SocketContextProps | null => {
 
 export const SocketProvider = ({ children }) => {
     const { user } = useAuth()!;
+    // TODO: use useRef in socket init
     if (!socket || socket.disconnected) {
         socket = io(import.meta.env.VITE_SOCKET_URL, {
             path: '/wsapp/',
             query: { userId: user.id, username: user.username },
             auth: { userId: user.id },
-            transports: ['websocket', 'polling']
+            transports: ['websocket']
         });
     }
 
