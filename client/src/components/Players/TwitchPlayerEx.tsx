@@ -4,8 +4,11 @@ import { PlayerExProps } from '../WatchPlayer';
 import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
+const twitchDomainsList = import.meta.env.VITE_TWITCH_DOMAINS;
+
 const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    // TODO: initialPlayingState should be TRUE if it's not a Peer
+    console.log('Is Peer', isPeer);
+    // TODO: initialPlayingState should be TRUE if it's not a Peer OR if url is changed
     const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
@@ -13,6 +16,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const {
         togglePlayPause,
         queriedTime,
+        resetQueriedTime,
         sendYourTime,
         queryCurrTime,
         socket
@@ -26,12 +30,21 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const mediaUrlChanged = useRef(false);
     const seekedSeconds = useRef<undefined | number>(undefined);
 
+    let parentDomainsList: string[] = [];
+
+    if (import.meta.env.PROD) {
+        console.log('Twitch Domains list', twitchDomainsList);
+        if (twitchDomainsList && typeof twitchDomainsList === 'string') {
+            parentDomainsList = twitchDomainsList.split(';').filter(x => x);
+        }
+    }
+
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
-            // TODO: time should be check if it's a time, typeof time === 'number'
-            if (time) {
+
+            if (typeof time === 'number') {
                 player.current!.seekTo(time, 'seconds');
             }
             setPlaying(state);
@@ -40,6 +53,8 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         // Get listener handler of this event because we have 2 listeners for it
         const mediaChangeEventListener = socket.on('media-url-changed', () => {
             mediaUrlChanged.current = true;
+            console.log('HHHHHHHHH', playing);
+            setPlaying(false);
         });
 
         return () => {
@@ -49,11 +64,12 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }, []);
 
     useEffect(() => {
-        if (queriedTime !== undefined && player.current) {
+        if (typeof queriedTime === 'number' && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
             pauseByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
+            resetQueriedTime();
         }
     }, [queriedTime, player.current]);
 
@@ -151,6 +167,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
+                     config={{ options: { parent: parentDomainsList } }}
         />
     );
 };

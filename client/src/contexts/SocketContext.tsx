@@ -11,6 +11,7 @@ interface SocketContextProps {
     togglePlayPause: (state: boolean, roomId: string, time: number) => void;
     queryCurrTime: (roomId: string) => void;
     queriedTime: number | undefined;
+    resetQueriedTime: () => void;
     sendYourTime?: (time: number) => void;
     userList: string[];
     setUserList: (list: string[]) => void;
@@ -143,6 +144,7 @@ export const SocketProvider = ({ children }) => {
                 togglePlayPause,
                 queryCurrTime,
                 queriedTime,
+                resetQueriedTime: () => setQueriedTime(undefined),
                 sendYourTime,
                 userList,
                 setUserList,

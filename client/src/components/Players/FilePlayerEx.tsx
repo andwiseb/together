@@ -12,6 +12,7 @@ const FilePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const {
         togglePlayPause,
         queriedTime,
+        resetQueriedTime,
         sendYourTime,
         changePlaybackRate,
         playbackRate,
@@ -51,10 +52,10 @@ const FilePlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }, []);
 
     useEffect(() => {
-        if (queriedTime !== undefined && player.current) {
+        if (typeof queriedTime === 'number' && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
-            // playedByCode.current = true;
             player.current.seekTo(queriedTime, 'seconds');
+            resetQueriedTime();
         }
     }, [queriedTime, player.current]);
 

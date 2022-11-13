@@ -13,8 +13,7 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         togglePlayPause,
         queriedTime,
         sendYourTime,
-        changePlaybackRate,
-        playbackRate,
+        resetQueriedTime,
         queryCurrTime,
         socket
     } = useSocket()!;
@@ -30,7 +29,7 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
-            if (time) {
+            if (typeof time === 'number') {
                 player.current!.seekTo(time, 'seconds');
             }
             setPlaying(state);
@@ -48,11 +47,11 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }, []);
 
     useEffect(() => {
-        if (queriedTime !== undefined && player.current) {
+        if (typeof queriedTime === 'number' && player.current) {
             // console.log('I QUERIED TIME AND IT IS', queriedTime);
             playedByCode.current = true;
-
             player.current.seekTo(queriedTime, 'seconds');
+            resetQueriedTime();
         }
     }, [queriedTime, player.current]);
 
@@ -61,25 +60,6 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             sendYourTime(player.current.getCurrentTime());
         }
     }, [sendYourTime]);
-
-    useEffect(() => {
-        changePlayBackRate(playbackRate);
-    }, [playbackRate, player.current]);
-
-    const changePlayBackRate = (rate: number) => {
-        if (player.current) {
-            const intPlayer = player.current.getInternalPlayer();
-            if (intPlayer) {
-                if ('setPlaybackRate' in intPlayer) {
-                    // Youtube, Vimeo
-                    intPlayer.setPlaybackRate(rate);
-                } else if ('playbackRate' in intPlayer && typeof intPlayer.playbackRate === 'function') {
-                    // Wistia
-                    intPlayer.playbackRate(rate);
-                }
-            }
-        }
-    }
 
     const setPlayerDefaults = () => {
         // Set default player props using stored room info
@@ -90,7 +70,7 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             }
 
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
-            changePlayBackRate(room.roomInfo.currSpeed);
+            // changePlayBackRate(room.roomInfo.currSpeed); // Not implemented by the player
         }
     }
 
@@ -152,10 +132,6 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         console.log('Player onError', error, data);
     }
 
-    const onPlayerPlaybackRateChange = (rate: number) => {
-        changePlaybackRate(room.id, rate);
-    }
-
     return (
         <ReactPlayer className='react-player' controls url={room.mediaUrl}
                      width='100%' height='100%' ref={player}
@@ -166,7 +142,6 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
                      onPause={onPlayerPause}
                      onSeek={onPlayerSeek}
                      onError={onPlayerError}
-                     onPlaybackRateChange={onPlayerPlaybackRateChange}
         />
     );
 };

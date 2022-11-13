@@ -20,6 +20,7 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const {
         socket,
         queriedTime,
+        resetQueriedTime,
         queryCurrTime,
         togglePlayPause,
         playbackRate,
@@ -33,7 +34,7 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
             console.log('PLAY/PAUSE Changed to', state, 'TIME', time);
             (state ? playedByCode : pauseByCode).current = true;
-            if (time) {
+            if (typeof time === 'number') {
                 seekedByCode.current = true;
                 player.current!.seekTo(time, 'seconds');
             }
@@ -52,13 +53,14 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }, []);
 
     useEffect(() => {
-        if (queriedTime !== undefined && player.current) {
+        if (typeof queriedTime === 'number' && player.current) {
             console.log('I QUERIED TIME AND IT IS', queriedTime);
             // playedByCode.current = true;
             if (initPlayingState) {
                 seekedByCode.current = true;
             }
             player.current.seekTo(queriedTime, 'seconds');
+            resetQueriedTime();
         }
     }, [queriedTime, player.current]);
 
@@ -69,6 +71,7 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }, [sendYourTime]);
 
     useEffect(() => {
+        // TODO: Need changedPlayBackRateByCode because setting it by cody cause firing playBackRateChanged (Tested on Wistia)
         changePlayBackRate(playbackRate);
     }, [playbackRate, player.current]);
 

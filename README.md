@@ -41,7 +41,11 @@ Execute the build command: `npm run build` in the server directory.
 This command should generate a `dist` folder contains the JS files of the backend.
 
 ### Client:
-First, make sure to create the environment file `.env.production` in client directory and put in it the same keys from `.env.development` with production values.
+First, make sure to create the environment file `.env.production` in client directory and put in it the same keys from `.env.development` with production values, also you need to add new key just for production:
+```
+# list of domains, use ; to add multiple entries
+VITE_TWITCH_DOMAINS=http://www.test.com/;https://www.test22.com/
+```
 
 Execute the build command: `npm run build` in the client directory.
 
