@@ -4,7 +4,7 @@ import ReactPlayer from 'react-player/wistia';
 import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
-const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
+const WistiaPlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
     const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
@@ -14,7 +14,7 @@ const WistiaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const seekedByCode = useRef<boolean>(false);
-    const mediaUrlChanged = useRef(false);
+    const mediaUrlChanged = useRef(defMediaUrlChanged);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
 
     const {

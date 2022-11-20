@@ -4,7 +4,7 @@ import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
-const SoundCloudPlayerEx = ({ room, isPeer }: PlayerExProps) => {
+const SoundCloudPlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
     const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
@@ -13,7 +13,7 @@ const SoundCloudPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const pauseByCode = useRef<boolean | undefined>(undefined);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
-    const mediaUrlChanged = useRef(false);
+    const mediaUrlChanged = useRef(defMediaUrlChanged);
 
     const {
         socket,
