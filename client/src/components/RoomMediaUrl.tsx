@@ -9,6 +9,7 @@ import RoomShareButton from './RoomShareButton';
 import { useAuth } from '../contexts/AuthContext';
 import { RoomService } from '../services/room-service';
 import CreateUser from './CreateUser';
+import { MATCH_DAILYMOTION } from './WatchPlayer';
 
 interface RoomMediaUrlProps {
     room: RoomModel | null;
@@ -60,7 +61,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
 
     const changeMediaUrl = (value: string) => {
         setUrl(value);
-        setUrlValidity(ReactPlayer.canPlay(value));
+        setUrlValidity(ReactPlayer.canPlay(value) || MATCH_DAILYMOTION.test(value));
     }
 
     const urlChanged = (e: SyntheticEvent) => {

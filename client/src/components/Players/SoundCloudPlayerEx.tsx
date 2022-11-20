@@ -5,12 +5,12 @@ import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
 const SoundCloudPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(false);
     const player = useRef<ReactPlayer>(null);
-    const pauseByCode = useRef<boolean>(false);
+    const pauseByCode = useRef<boolean | undefined>(undefined);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const mediaUrlChanged = useRef(false);
@@ -67,6 +67,7 @@ const SoundCloudPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             console.log('SETTING DEF ROOM INFO', room.roomInfo);
             if (playing) {
                 playedByCode.current = true;
+                pauseByCode.current = true;
             }
             player.current.seekTo(room.roomInfo.currTime, 'seconds');
         }
@@ -103,10 +104,10 @@ const SoundCloudPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     const onPlayerPause = () => {
-        console.log('Player onPause');
+        console.log('Player onPause', pauseByCode.current);
         setPlaying(false);
 
-        if (!pauseByCode.current) {
+        if (pauseByCode.current === false) {
             togglePlayPause(false, room.id, player.current!.getCurrentTime());
         } else {
             pauseByCode.current = false;

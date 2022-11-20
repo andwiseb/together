@@ -5,7 +5,7 @@ import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
 const KalturaPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);

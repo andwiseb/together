@@ -17,7 +17,7 @@ import KalturaPlayerEx from './Players/KalturaPlayerEx';
 const MATCH_YOUTUBE = /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\/|watch\?v=|watch\?.+&v=|shorts\/))((\w|-){11})|youtube\.com\/playlist\?list=|youtube\.com\/user\//
 const MATCH_TWITCH_VIDEO = /(?:www\.|go\.)?twitch\.tv\/videos\/(\d+)($|\?)/
 const MATCH_TWITCH_CHANNEL = /(?:www\.|go\.)?twitch\.tv\/([a-z0-9_]+)($|\?)/
-const MATCH_DAILYMOTION = /^(?:(?:https?):)?(?:\/\/)?(?:www\.)?(?:(?:dailymotion\.com(?:\/embed)?\/video)|dai\.ly)\/([a-zA-Z0-9]+)(?:_[\w_-]+)?$/
+export const MATCH_DAILYMOTION = /^(?:(?:https?):)?(?:\/\/)?(?:www\.)?(?:(?:dailymotion\.com(?:\/embed)?\/video)|dai\.ly)\/([a-zA-Z0-9]+)(?:(?:_[\w_-]+)(?:[\w.#_-]+)?|(?:\?playlist=([a-zA-Z0-9]+)))?$/
 const MATCH_VIMEO = /vimeo\.com\/(?!progressive_redirect).+/
 const MATCH_VIMEO_FILE = /vimeo\.com\/external\/[0-9]+\..+/
 const MATCH_FACEBOOK = /^https?:\/\/(www\.)?facebook\.com.*\/(video(s)?|watch|story)(\.php?|\/).+$/
