@@ -1,11 +1,12 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { config } from 'dotenv'
 import { connectDB } from './src/db-connection';
-import { createServer } from "http";
+import { createServer as createHttpsServer } from "https";
+import { createServer as createHttpServer } from "http";
 import { clearAllRoomAutoCloseTimeouts, initSocket } from './src/socket-io';
-import { join } from 'path';
+import { readFileSync } from 'fs';
 
 import roomRoutes from './src/api/routes/roomRoutes';
 import userRoutes from './src/api/routes/userRoutes';
@@ -19,7 +20,18 @@ connectDB();
 // Set-up express server
 const port = process.env.PORT || 3000;
 const app = express();
-const httpServer = createServer(app);
+let httpServer;
+if (process.env.NODE_ENV === 'production') {
+    httpServer = createHttpsServer({
+        key: readFileSync(process.env.SSL_KEY_PATH!),
+        cert: readFileSync(process.env.SSL_CERT_PATH!),
+        requestCert: false,
+        rejectUnauthorized: false
+    }, app);
+} else {
+    httpServer = createHttpServer(app);
+}
+
 // Init the socket.io server
 initSocket(httpServer);
 
