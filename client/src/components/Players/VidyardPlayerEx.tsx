@@ -4,8 +4,8 @@ import { useSocket } from '../../contexts/SocketContext';
 import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
-const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+const VidyardPlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
+    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
@@ -14,7 +14,7 @@ const VidyardPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
     const seekedByCode = useRef<boolean>(false);
-    const mediaUrlChanged = useRef(false);
+    const mediaUrlChanged = useRef(defMediaUrlChanged);
     const { isNewRoom, setIsNewRoom } = useRoom()!;
 
     const {

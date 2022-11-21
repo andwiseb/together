@@ -6,10 +6,8 @@ import { useRoom } from '../../contexts/RoomContext';
 
 const twitchDomainsList = import.meta.env.VITE_TWITCH_DOMAINS;
 
-const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    console.log('Is Peer', isPeer);
-    // TODO: initialPlayingState should be TRUE if it's not a Peer OR if url is changed
-    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+const TwitchPlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
+    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
@@ -27,7 +25,7 @@ const TwitchPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
-    const mediaUrlChanged = useRef(false);
+    const mediaUrlChanged = useRef(defMediaUrlChanged);
     const seekedSeconds = useRef<undefined | number>(undefined);
 
     let parentDomainsList: string[] = [];

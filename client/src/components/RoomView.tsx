@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -33,6 +33,7 @@ const RoomView = () => {
     const [roomClosed, setRoomClosed] = useState<boolean>(false);
     const [showCreateUser, setShowCreateUser] = useState<boolean>(false);
     const { user } = useAuth()!;
+    const mediaUrlChanged = useRef(false);
     let roomService: RoomService;
 
     const id = params.get('id');
@@ -79,6 +80,9 @@ const RoomView = () => {
 
         socket.on('room-closed', () => setRoomClosed(true));
         const mediaChangeEventListener = socket.on('media-url-changed', (newMediaUrl: string) => {
+            // mediaUrlChanged should be calculated on RoomView level also, because it was bound to the player
+            // and when url changes the player this will not work as expected
+            mediaUrlChanged.current = true;
             setRoom((prevRoom) =>
                 ({
                     ...prevRoom!,
@@ -149,7 +153,7 @@ const RoomView = () => {
                                 <Row>
                                     <Col>
                                         <div className='player-wrapper'>
-                                            <WatchPlayer room={room} />
+                                            <WatchPlayer room={room} defMediaUrlChanged={mediaUrlChanged.current} />
                                         </div>
                                     </Col>
                                     <Col lg="3" md="12" className='pt-3 py-lg-0 ps-lg-0'>

@@ -4,8 +4,8 @@ import { PlayerExProps } from '../WatchPlayer';
 import { useSocket } from '../../contexts/SocketContext';
 import { useRoom } from '../../contexts/RoomContext';
 
-const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
-    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
+const DailyMotionPlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
+    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
@@ -23,7 +23,7 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     const pauseByCode = useRef<boolean>(false);
     // Make play accept undefined, so we can ignore first play event when player loaded
     const playedByCode = useRef<boolean | undefined>(initPlayingState ? undefined : false);
-    const mediaUrlChanged = useRef(false);
+    const mediaUrlChanged = useRef(defMediaUrlChanged);
 
     useEffect(() => {
         socket.on('toggle-player-state', (state: boolean, time: number | null) => {
@@ -60,6 +60,11 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
             sendYourTime(player.current.getCurrentTime());
         }
     }, [sendYourTime]);
+
+    const removeUrlSearchParams = (url: string): string => {
+        const urlObj = new URL('', room.mediaUrl);
+        return urlObj.host + urlObj.pathname;
+    }
 
     const setPlayerDefaults = () => {
         // Set default player props using stored room info
@@ -133,7 +138,7 @@ const DailyMotionPlayerEx = ({ room, isPeer }: PlayerExProps) => {
     }
 
     return (
-        <ReactPlayer className='react-player' controls url={room.mediaUrl}
+        <ReactPlayer className='react-player' controls url={removeUrlSearchParams(room.mediaUrl)}
                      width='100%' height='100%' ref={player}
                      playing={playing} muted={muted} volume={volume}
                      onReady={onPlayerReady}

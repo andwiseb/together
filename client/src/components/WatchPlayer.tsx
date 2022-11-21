@@ -17,7 +17,7 @@ import KalturaPlayerEx from './Players/KalturaPlayerEx';
 const MATCH_YOUTUBE = /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\/|watch\?v=|watch\?.+&v=|shorts\/))((\w|-){11})|youtube\.com\/playlist\?list=|youtube\.com\/user\//
 const MATCH_TWITCH_VIDEO = /(?:www\.|go\.)?twitch\.tv\/videos\/(\d+)($|\?)/
 const MATCH_TWITCH_CHANNEL = /(?:www\.|go\.)?twitch\.tv\/([a-z0-9_]+)($|\?)/
-const MATCH_DAILYMOTION = /^(?:(?:https?):)?(?:\/\/)?(?:www\.)?(?:(?:dailymotion\.com(?:\/embed)?\/video)|dai\.ly)\/([a-zA-Z0-9]+)(?:_[\w_-]+)?$/
+export const MATCH_DAILYMOTION = /^(?:(?:https?):)?(?:\/\/)?(?:www\.)?(?:(?:dailymotion\.com(?:\/embed)?\/video)|dai\.ly)\/([a-zA-Z0-9]+)(?:(?:_[\w_-]+)(?:[\w.#_-]+)?|(?:\?playlist=([a-zA-Z0-9]+)))?$/
 const MATCH_VIMEO = /vimeo\.com\/(?!progressive_redirect).+/
 const MATCH_VIMEO_FILE = /vimeo\.com\/external\/[0-9]+\..+/
 const MATCH_FACEBOOK = /^https?:\/\/(www\.)?facebook\.com.*\/(video(s)?|watch|story)(\.php?|\/).+$/
@@ -30,11 +30,17 @@ const MATCH_VIDYARD = /vidyard.com\/(?:watch\/)?([a-zA-Z0-9-_]+)/
 const MATCH_KALTURA = /^https?:\/\/[a-zA-Z]+\.kaltura.(com|org)\/p\/([0-9]+)\/sp\/([0-9]+)00\/embedIframeJs\/uiconf_id\/([0-9]+)\/partner_id\/([0-9]+)(.*)entry_id.([a-zA-Z0-9-_].*)$/
 
 export interface PlayerExProps {
-    room: RoomModel,
-    isPeer: boolean,
+    room: RoomModel;
+    isPeer: boolean;
+    defMediaUrlChanged: boolean;
 }
 
-const WatchPlayer = ({ room }: { room: RoomModel }) => {
+interface WatchPlayerProps {
+    room: RoomModel;
+    defMediaUrlChanged: boolean;
+}
+
+const WatchPlayer = ({ room, defMediaUrlChanged }: WatchPlayerProps) => {
     const { userList } = useSocket()!;
     const isPeer = useMemo(() => userList?.length > 1, [userList]);
     const isYoutube = useMemo(() => MATCH_YOUTUBE.test(room.mediaUrl), [room.mediaUrl]);
@@ -53,50 +59,50 @@ const WatchPlayer = ({ room }: { room: RoomModel }) => {
     const isKaltura = useMemo(() => MATCH_KALTURA.test(room.mediaUrl), [room.mediaUrl]);
 
     if (isYoutube) {
-        return (<YoutubePlayerEx room={room} isPeer={isPeer} />);
+        return (<YoutubePlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isTwitch) {
-        return (<TwitchPlayerEx room={room} isPeer={isPeer} />);
+        return (<TwitchPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isFacebook) {
-        return (<FacebookPlayerEx room={room} isPeer={isPeer} />);
+        return (<FacebookPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isDailyMotion) {
-        return (<DailyMotionPlayerEx room={room} isPeer={isPeer} />);
+        return (<DailyMotionPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isVimeo) {
-        return (<VimeoPlayerEx room={room} isPeer={isPeer} />);
+        return (<VimeoPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isSoundCloud) {
-        return (<SoundCloudPlayerEx room={room} isPeer={isPeer} />);
+        return (<SoundCloudPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isStreamable) {
-        return (<StreamablePlayerEx room={room} isPeer={isPeer} />);
+        return (<StreamablePlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isWistia) {
-        return (<WistiaPlayerEx room={room} isPeer={isPeer} />);
+        return (<WistiaPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isMixcloud) {
-        return (<MixcloudPlayerEx room={room} isPeer={isPeer} />);
+        return (<MixcloudPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isVidyard) {
-        return (<VidyardPlayerEx room={room} isPeer={isPeer} />);
+        return (<VidyardPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
     if (isKaltura) {
-        return (<KalturaPlayerEx room={room} isPeer={isPeer} />);
+        return (<KalturaPlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />);
     }
 
-    return <FilePlayerEx room={room} isPeer={isPeer} />;
+    return <FilePlayerEx room={room} isPeer={isPeer} defMediaUrlChanged={defMediaUrlChanged} />;
 };
 
 export default WatchPlayer;
