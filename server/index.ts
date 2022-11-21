@@ -3,7 +3,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { config } from 'dotenv'
 import { connectDB } from './src/db-connection';
-import { createServer } from "https";
+import { createServer as createHttpsServer } from "https";
+import { createServer as createHttpServer } from "http";
 import { clearAllRoomAutoCloseTimeouts, initSocket } from './src/socket-io';
 import { readFileSync } from 'fs';
 
@@ -19,12 +20,18 @@ connectDB();
 // Set-up express server
 const port = process.env.PORT || 3000;
 const app = express();
-const httpServer = createServer({
-    key: readFileSync(process.env.SSL_KEY_PATH!),
-    cert: readFileSync(process.env.SSL_CERT_PATH!),
-    requestCert: false,
-    rejectUnauthorized: false
-}, app);
+let httpServer;
+if (process.env.NODE_ENV === 'production') {
+    httpServer = createHttpsServer({
+        key: readFileSync(process.env.SSL_KEY_PATH!),
+        cert: readFileSync(process.env.SSL_CERT_PATH!),
+        requestCert: false,
+        rejectUnauthorized: false
+    }, app);
+} else {
+    httpServer = createHttpServer(app);
+}
+
 // Init the socket.io server
 initSocket(httpServer);
 
