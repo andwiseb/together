@@ -5,7 +5,7 @@ import { PlayerExProps } from '../WatchPlayer';
 import { useRoom } from '../../contexts/RoomContext';
 
 const YoutubePlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
-    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
