@@ -7,7 +7,7 @@ import { useRoom } from '../../contexts/RoomContext';
 const twitchDomainsList = import.meta.env.VITE_TWITCH_DOMAINS;
 
 const TwitchPlayerEx = ({ room, isPeer, defMediaUrlChanged }: PlayerExProps) => {
-    const initPlayingState = !isPeer ? true : (room.roomInfo ? room.roomInfo.isPlaying : true);
+    const initPlayingState = room.roomInfo ? room.roomInfo.isPlaying : true;
     const [playing, setPlaying] = useState<boolean>(initPlayingState);
     const [volume, setVolume] = useState<number | undefined>(undefined);
     const [muted, setMuted] = useState(true);
