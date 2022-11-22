@@ -95,7 +95,7 @@ const LandingPage = () => {
                    onHide={() => setLoading(false)}>
                 <Modal.Header closeButton={!!error}>
                     <Modal.Title>
-                        {error ? 'Creation failed!' : 'Creating ...'}
+                        {error ? 'creation failed!' : 'creating...'}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>

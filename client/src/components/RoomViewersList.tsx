@@ -29,7 +29,7 @@ const RoomViewersList = ({ room }: { room: RoomModel }) => {
 
     return (
         <div className='h-100 position-relative overflow-auto'>
-            <h6 className='px-2 pt-2'>Currently Watching ({viewersNameList.length}):</h6>
+            <h6 className='px-2 pt-2'>currently watching ({viewersNameList.length}):</h6>
             <ListGroup as="ol" numbered variant="flush" className='position-absolute w-100'>
                 {
                     viewersNameList.map((u, i) =>

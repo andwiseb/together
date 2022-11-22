@@ -86,7 +86,7 @@ const ChatSection = () => {
                                    style={{ maxWidth: '75%', minWidth: '50%' }}>
                                 <div className='w-100 chat-item-header gap-2'>
                                     <span className="fw-bold chat-item-text">
-                                        {isFromMe(msg) ? 'Me' : msg.user}
+                                        {isFromMe(msg) ? 'me' : msg.user}
                                     </span>
                                     <span className='chat-item-timestamp'>{formatDate(msg.time)}</span>
                                 </div>
