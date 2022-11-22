@@ -51,12 +51,14 @@ const ChatSection = () => {
             if (!lastMsg) {
                 result.push(msg)
             } else {
-                if (lastMsg.user && lastMsg.user === msg.user &&
-                    (new Date().getTime() - new Date(lastMsg.time).getTime()) < TIME_SPAN_BETWEEN_MESSAGES) {
-                    lastMsg.text = lastMsg.text + '\n' + msg.text;
-                } else {
-                    result.push(msg);
-                }
+                // if (lastMsg.user && lastMsg.user === msg.user &&
+                //     (new Date().getTime() - new Date(lastMsg.time).getTime()) < TIME_SPAN_BETWEEN_MESSAGES) {
+                //     lastMsg.text = lastMsg.text + '\n' + msg.text;
+                // } else {
+                //     result.push(msg);
+                // }
+
+                result.push(msg);
             }
         });
         return result;
