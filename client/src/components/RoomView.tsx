@@ -14,6 +14,8 @@ import PageFooter from './PageFooter';
 import VideoSidebar from './VideoSidebar';
 import { Modal } from 'react-bootstrap';
 import CreateUser from './CreateUser';
+import { useRoom } from '../contexts/RoomContext';
+import { APP_TITLE } from './LandingPage';
 
 const ErrorDisplay = ({ error }) => {
     return (
@@ -34,6 +36,7 @@ const RoomView = () => {
     const [showCreateUser, setShowCreateUser] = useState<boolean>(false);
     const { user } = useAuth()!;
     const mediaUrlChanged = useRef(false);
+    const { unreadMessagesCount, userAway } = useRoom()!;
     let roomService: RoomService;
 
     const id = params.get('id');
@@ -71,6 +74,10 @@ const RoomView = () => {
                         console.log('Joined room:', room.link);
                         sendMessage(room.id, `${user.username} joined the room.`, null);
                     });
+                    // Request permission to send notifications
+                    Notification.requestPermission()
+                        .then(ans => console.log('Notifications permission:', ans))
+                        .catch(err => console.log('Notifications permission error:', err));
                 }
                 setRoom(room);
                 setError(null);
@@ -103,6 +110,15 @@ const RoomView = () => {
             socket.off('new-admin');
         }
     }, [socket]);
+
+    useEffect(() => {
+        const title = `${APP_TITLE} | room`;
+        if (unreadMessagesCount && userAway) {
+            document.title = `(${unreadMessagesCount}) ${title}`;
+        } else {
+            document.title = title;
+        }
+    }, [unreadMessagesCount]);
 
     if (showCreateUser) {
         return (<Modal show={showCreateUser}

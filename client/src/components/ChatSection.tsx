@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { Alert } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
+import { useIsInViewport } from '../hooks/useInView';
+import { useRoom } from '../contexts/RoomContext';
+import appLogo from '../assets/app_logo.png';
 
 interface MessageModel {
     user: string;
@@ -23,20 +26,38 @@ const ChatSection = () => {
         return msg.user === null
     }, []);
 
+    const isChatInViewport = useIsInViewport(chatDiv);
+    const { setUnreadMessagesCount, userAway } = useRoom()!;
+
     useLayoutEffect(() => {
         scrollChatToBottom();
     }, [messages]);
 
     useEffect(() => {
+        if (isChatInViewport) {
+            setUnreadMessagesCount(0);
+        }
+
         socket.on('message-received', (text, user, time) => {
+            const newMessage: MessageModel = { text, user, time };
+            if (!isFromRoomBot(newMessage) && (!isChatInViewport || userAway)) {
+                setUnreadMessagesCount((prv) => prv + 1);
+
+                if (userAway) {
+                    new Notification(`Message from ${user}:`, {
+                        body: text,
+                        icon: appLogo
+                    });
+                }
+            }
             setMessages((prev) => {
-                return mergeSameUserMsgs([...prev, { text, user, time }])
+                return mergeSameUserMsgs([...prev, newMessage])
             });
         });
         return () => {
             socket.off('message-received');
         };
-    }, []);
+    }, [isChatInViewport, userAway]);
 
     const scrollChatToBottom = () => {
         if (chatDiv.current) {

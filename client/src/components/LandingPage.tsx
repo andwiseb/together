@@ -15,6 +15,7 @@ import { handleHttpError } from '../services/http-client';
 import { useRoom } from '../contexts/RoomContext';
 
 const defRoomUrl = import.meta.env.VITE_DEF_ROOM_VIDEO_URL;
+export const APP_TITLE = 'fun2g';
 
 const LandingPage = () => {
     const [showCreate, setShowCreate] = useState<boolean>(false);
@@ -30,6 +31,8 @@ const LandingPage = () => {
         if (newUserCreated && user) {
             createRoomHandler();
         }
+
+        document.title = `${APP_TITLE} | watch videos with friends`;
     }, [user]);
 
     const createRoomHandler = () => {
