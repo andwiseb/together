@@ -14,9 +14,9 @@ const VideoSidebar = ({ room }: { room: RoomModel }) => {
             <Card.Header className='px-2'>
                 <ButtonGroup className='w-100'>
                     <Button onClick={() => setViewName('chat')}
-                            variant={viewName === 'chat' ? 'dark' : 'outline-dark'}>Chat</Button>
+                            variant={viewName === 'chat' ? 'dark' : 'outline-dark'}>chat</Button>
                     <Button onClick={() => setViewName('viewers')}
-                            variant={viewName === 'viewers' ? 'dark' : 'outline-dark'}>Viewers List</Button>
+                            variant={viewName === 'viewers' ? 'dark' : 'outline-dark'}>viewers</Button>
                 </ButtonGroup>
             </Card.Header>
             <Card.Body className='p-0'>
