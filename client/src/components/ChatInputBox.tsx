@@ -33,13 +33,13 @@ const ChatInputBox = ({ room }: { room: RoomModel }) => {
                             value={msg}
                             onChange={(e) => setMsg(e.target.value)}
                             type="text"
-                            placeholder="Type message..."
+                            placeholder="type message..."
                             required
                             disabled={false}
                         />
                         <Button variant="outline-dark" type='submit'
                                 disabled={sending || !isConnected}>
-                            Send
+                            send
                         </Button>
                     </InputGroup>
                 </Form.Group>

@@ -18,14 +18,14 @@ const RoomShareButton = ({ roomLink }: { roomLink?: string }) => {
     return (
         <>
             <CopyToClipboard text={shareLink} onCopy={() => setShow(true)}>
-                <Button ref={target} variant="outline-primary" className='flex-shrink-0'>
-                    Share!
+                <Button ref={target} variant="outline-dark" className='flex-shrink-0'>
+                    share!
                 </Button>
             </CopyToClipboard>
             <Overlay target={target.current} show={show} placement="bottom">
                 {(props) => (
                     <Tooltip id="overlay-example" {...props}>
-                        Copied!
+                        copied!
                     </Tooltip>
                 )}
             </Overlay>

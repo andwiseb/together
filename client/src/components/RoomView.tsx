@@ -148,7 +148,7 @@ const RoomView = () => {
                     className='d-flex gap-1 gap-lg-5 flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom'>
                     <Link to="/"
                           className="mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-                        <span className="fs-4">ww2g</span>
+                        <span className="fs-4">fun2g</span>
                     </Link>
                     {!error && !roomClosed && isConnected && <div className='flex-fill'>
                       <RoomMediaUrl room={room}

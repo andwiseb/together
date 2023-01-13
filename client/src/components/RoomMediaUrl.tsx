@@ -100,7 +100,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
                 <Form.Group>
                     <div className='d-flex flex-wrap flex-md-nowrap gap-2 align-items-center'>
                         <InputGroup>
-                            <InputGroup.Text>Url:</InputGroup.Text>
+                            <InputGroup.Text>url:</InputGroup.Text>
                             <Form.Control
                                 value={url}
                                 onChange={urlChanged}
@@ -112,18 +112,18 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
                             {canChangeMedia && <Button variant="outline-dark"
                                                        onClick={changeMediaUrlHandler}
                                                        disabled={!canSubmit(url)}>
-                              Change
+                              change
                             </Button>}
                         </InputGroup>
                         <RoomShareButton roomLink={room?.link} />
                         {
                             canCloseRoom &&
-                            <Button variant="outline-danger" onClick={closeRoomHandler} className='flex-shrink-0'>
-                              Close Room
+                            <Button variant="outline-dark" onClick={closeRoomHandler} className='flex-shrink-0'>
+                              close room
                             </Button>
                         }
-                        <DropdownButton variant='outline-info' title={user?.username || 'guest'}>
-                            <Dropdown.Item onClick={changeUsernameHandler}>Change username</Dropdown.Item>
+                        <DropdownButton variant='outline-dark' title={user?.username || 'guest'}>
+                            <Dropdown.Item onClick={changeUsernameHandler}>change username</Dropdown.Item>
                         </DropdownButton>
                     </div>
                 </Form.Group>
@@ -134,7 +134,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
                    size='lg' centered>
                 <Modal.Header closeButton>
                     <Modal.Title>
-                        Change Username:
+                        change username:
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
