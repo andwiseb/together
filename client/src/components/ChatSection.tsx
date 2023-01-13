@@ -4,10 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { useIsInViewport } from '../hooks/useInView';
 import { useRoom } from '../contexts/RoomContext';
+import { UserModel } from '../types';
 import appLogo from '../assets/app_logo.png';
 
 interface MessageModel {
-    user: string;
+    user: UserModel | null;
     text: string;
     time: string;
 }
@@ -20,8 +21,8 @@ const ChatSection = () => {
     const { user } = useAuth()!;
     const chatDiv = useRef<HTMLDivElement>(null);
     const isFromMe = useCallback((msg: MessageModel) => {
-        return msg.user && msg.user === user.username
-    }, []);
+        return msg.user && msg.user.id === user.id
+    }, [user]);
     const isFromRoomBot = useCallback((msg: MessageModel) => {
         return msg.user === null
     }, []);
@@ -38,13 +39,13 @@ const ChatSection = () => {
             setUnreadMessagesCount(0);
         }
 
-        socket.on('message-received', (text, user, time) => {
+        socket.on('message-received', (text: string, user: UserModel, time: string) => {
             const newMessage: MessageModel = { text, user, time };
             if (!isFromRoomBot(newMessage) && (!isChatInViewport || userAway)) {
                 setUnreadMessagesCount((prv) => prv + 1);
 
                 if (userAway) {
-                    new Notification(`Message from ${user}:`, {
+                    new Notification(`Message from ${user.username}:`, {
                         body: text,
                         icon: appLogo
                     });
@@ -72,7 +73,7 @@ const ChatSection = () => {
             if (!lastMsg) {
                 result.push(msg)
             } else {
-                if (lastMsg.user && lastMsg.user === msg.user &&
+                if (lastMsg.user && lastMsg.user.id === msg.user?.id &&
                     (new Date().getTime() - new Date(lastMsg.time).getTime()) < TIME_SPAN_BETWEEN_MESSAGES) {
                     lastMsg.text = lastMsg.text + '\n' + msg.text;
                 } else {
@@ -107,7 +108,7 @@ const ChatSection = () => {
                                    style={{ maxWidth: '75%', minWidth: '50%' }}>
                                 <div className='w-100 chat-item-header gap-2'>
                                     <span className="fw-bold chat-item-text">
-                                        {isFromMe(msg) ? 'Me' : msg.user}
+                                        {isFromMe(msg) ? 'Me' : msg.user!.username}
                                     </span>
                                     <span className='chat-item-timestamp'>{formatDate(msg.time)}</span>
                                 </div>

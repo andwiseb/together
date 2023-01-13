@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
@@ -8,7 +8,7 @@ import { Alert } from 'react-bootstrap';
 import { handleHttpError } from '../services/http-client';
 
 interface CreateUsernameProps {
-    successCallback?: () => void;
+    successCallback?: (data?: any) => void;
 }
 
 const generateRandUsername = (): string => {
@@ -32,9 +32,8 @@ const CreateUser = ({ successCallback }: CreateUsernameProps) => {
             .then((user) => {
                 setUser(user);
                 if (successCallback && typeof successCallback === 'function') {
-                    successCallback();
+                    successCallback(value);
                 }
-                // navigate('/create-room');
             })
             .catch((err) => {
                 console.error('error', err);

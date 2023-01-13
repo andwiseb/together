@@ -18,11 +18,8 @@ const ChatInputBox = ({ room }: { room: RoomModel }) => {
         }
         setSending(true);
         const timestamp = new Date().toISOString();
-        sendMessage(room.id, msg.trim(), user.username, timestamp, () => {
+        sendMessage(room.id, msg.trim(), user, timestamp, () => {
             setSending(false);
-            /*setMessages((prev) => {
-                return mergeSameUserMsgs([...prev, { text: msg.trim(), user: user.username, time: timestamp }])
-            });*/
             setMsg('');
         });
     }

@@ -18,7 +18,7 @@ interface RoomMediaUrlProps {
 }
 
 const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps) => {
-    const { closeRoom: socketCloseRoom, changeMediaUrl: socketChangeMediaUrl } = useSocket()!;
+    const { closeRoom: socketCloseRoom, changeMediaUrl: socketChangeMediaUrl, notifyUsernameChange } = useSocket()!;
     const navigate = useNavigate();
     const [url, setUrl] = useState<string>(room?.mediaUrl || '');
     const [urlValidity, setUrlValidity] = useState<boolean>(true);
@@ -89,6 +89,11 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
         setShowChangeUsername(true);
     }
 
+    const changeUsernameCallback = (newName: string) => {
+        setShowChangeUsername(false);
+        notifyUsernameChange(user.id, newName);
+    }
+
     return (
         <>
             <Form onSubmit={onSubmit} noValidate>
@@ -133,7 +138,7 @@ const RoomMediaUrl = ({ room, canChangeMedia, canCloseRoom }: RoomMediaUrlProps)
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <CreateUser successCallback={() => setShowChangeUsername(false)} />
+                    <CreateUser successCallback={changeUsernameCallback} />
                 </Modal.Body>
             </Modal>
         </>

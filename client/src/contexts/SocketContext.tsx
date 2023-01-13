@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { UserModel } from '../types';
 
 let socket: Socket;
 
@@ -19,9 +20,10 @@ interface SocketContextProps {
     playbackRate: number;
     closeRoom: (roomId: string) => void;
     changeMediaUrl: (roomId: string, mediaUrl: string) => void;
-    sendMessage: (roomId: string, text: string, username: string | null, time?: string, cb?: () => void) => void;
+    sendMessage: (roomId: string, text: string, user: UserModel | null, time?: string, cb?: () => void) => void;
     notifySeekVideo: (roomId: string, seconds: number) => void;
     notifyVideoSeeked?: number;
+    notifyUsernameChange: (userId: string, newName: string) => void;
 }
 
 const SocketContext = createContext<SocketContextProps | null>(null);
@@ -125,15 +127,19 @@ export const SocketProvider = ({ children }) => {
         socket.emit('change-media-url', roomId, mediaUrl);
     }
 
-    const sendMessage = (roomId: string, text: string, username: string | null, time?: string, cb?: () => void) => {
+    const sendMessage = (roomId: string, text: string, user: UserModel | null, time?: string, cb?: () => void) => {
         if (!time) {
             time = new Date().toISOString();
         }
-        socket.emit('send-message', roomId, text, username, time, cb);
+        socket.emit('send-message', roomId, text, user, time, cb);
     }
 
     const notifySeekVideo = (roomId: string, seconds: number) => {
         socket.emit('seek-video', roomId, seconds);
+    }
+
+    const notifyUsernameChange = (userId: string, newName: string) => {
+        socket.emit('username-change', userId, newName);
     }
 
     return (
@@ -155,7 +161,8 @@ export const SocketProvider = ({ children }) => {
                 changeMediaUrl,
                 sendMessage,
                 notifySeekVideo,
-                notifyVideoSeeked
+                notifyVideoSeeked,
+                notifyUsernameChange
             }}
         >
             {children}

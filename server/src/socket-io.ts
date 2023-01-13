@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { updateRoomInfo } from './api/controllers/roomInfoController';
 import { getUserById } from './api/controllers/userController';
 import { getRoomById, updateRoom } from './api/controllers/roomController';
-import { Room, RoomInfo } from '@prisma/client';
+import { Room, RoomInfo, User } from '@prisma/client';
 import { clearTimeout } from 'timers';
 
 let io: Server;
@@ -149,9 +149,7 @@ export const initSocket = (appServer) => {
             socket.to(room).emit('toggle-player-state', state, state ? time : null);
             // Update room info with current time and playing state
             if (!updateRoomInfoTimeout && typeof time === 'number') {
-                updateRoomInfoFunc(room, { currTime: time, isPlaying: state});
-            /*} else if (state && !updateRoomInfoTimeout && time) {
-                updateRoomInfoFunc(room, { currTime: time, isPlaying: true });*/
+                updateRoomInfoFunc(room, { currTime: time, isPlaying: state });
             }
         });
 
@@ -180,8 +178,8 @@ export const initSocket = (appServer) => {
             io.to(room).emit('media-url-changed', mediaUrl);
         });
 
-        socket.on('send-message', (room: string, text: string, username: string | null, time, cb?: () => void) => {
-            io.to(room).emit('message-received', text, username, time);
+        socket.on('send-message', (room: string, text: string, user: User | null, time, cb?: () => void) => {
+            io.to(room).emit('message-received', text, user, time);
             if (cb && typeof cb === 'function') {
                 cb();
             }
@@ -189,6 +187,18 @@ export const initSocket = (appServer) => {
 
         socket.on('seek-video', (room: string, seconds: number) => {
             socket.to(room).emit('video-seeked', seconds);
+        });
+
+        socket.on('username-change', (userId: string, newName: string) => {
+            const oldName = socket.data.username;
+            socket.data.username = newName;
+
+            // Notify all the joined rooms about the new username
+            const rooms = Array.from(socket.rooms.keys()).filter(x => x !== socket.id);
+            for (const room of rooms) {
+                socket.to(room).emit('message-received', `${oldName} changed username to: ${newName}`,
+                    null, new Date().toISOString());
+            }
         });
     });
 }
