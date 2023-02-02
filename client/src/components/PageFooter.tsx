@@ -7,7 +7,7 @@ const PageFooter = () => {
         <Container>
             <footer className='d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top'>
                 <Col md={4} className='d-flex align-items-center'>
-                    <span className="mb-3 mb-md-0 text-muted">&copy; 2022 | andwiseb</span>
+                    <span className="mb-3 mb-md-0 text-muted">&copy; 2022 | <a href="https://discord.gg/WkjruB28An">report bug</a></span>
                 </Col>
                 <ul className="nav col-md-4 justify-content-end list-unstyled d-flex">
                     <li className="ms-3"><a className="text-muted" href="#">
